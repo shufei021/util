@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=`, initial-scale=1.0">
+    <title>cs </title>
+</head>
+<body>
+    <button id="btn">按钮</button>
+</body>
+<script>
+ document.querySelector('#btn').addEventListener('click', function() {
+    console.log('%c [ rutils.downloadByImgLink ]-15', 'font-size:13px; background:pink; color:#bf2c9f;')
+    // 调用函数下载图片
+    downloadImage('https://b.yzcdn.cn/vant/icon-demo-1126.png','image.jpg');
+})
+
+    function downloadImage(url, filename) {
+        fetch(url)
+            .then(response => response.blob())
+            .then(blob => {
+            const blobUrl = window.URL.createObjectURL(blob);
+
+            const a = document.createElement('a');
+            a.href = blobUrl;
+            a.download = filename;
+
+            document.body.appendChild(a);
+            a.click();
+
+            window.URL.revokeObjectURL(blobUrl);
+            document.body.removeChild(a);
+        });
+    }
+function deepCloneFunction(func) {
+    // 确保传入的参数是一个函数
+    if (typeof func !== 'function') {
+        throw new Error('Input must be a function');
+    }
+
+    // 创建一个新的函数，复制原函数的代码体
+    const clonedFunc = new Function('return ' + func.toString())();
+
+    // 复制原函数的原型链
+    clonedFunc.prototype = Object.create(func.prototype);
+
+    // 复制原函数的属性
+    for (let key in func) {
+        if (func.hasOwnProperty(key)) {
+            clonedFunc[key] = func[key];
+        }
+    }
+
+    return clonedFunc;
+}
+const deepClone = parent => {
+    const isType = (o, t)=> Object.prototype.toString.call(o).slice(8, -1).toLowerCase() === t
+    // 维护两个储存循环引用的数组
+    const parents = []
+    const children = []
+    const _clone = parent => {
+        if (parent === null) return null
+        if (typeof parent !== 'object') return parent
+        // 对象处理
+        let child, proto
+        // 数组处理
+        if (isType(parent, 'array')) {
+            // 对数组做特殊处理
+            child = []
+        } else if (isType(parent, 'regexp')) { // 正则处理
+            // 对正则对象做特殊处理
+            child = new parent.constructor(parent.source, /\w*$/.exec(parent))
+            if (parent.lastIndex) child.lastIndex = parent.lastIndex
+        } else if (isType(parent, 'date')) { // 日期处理
+            // 对Date对象做特殊处理
+            child = new Date(parent.getTime())
+        } else if(isType(parent, 'function')) {
+            // 处理对象原型
+            proto = Object.getPrototypeOf(parent)
+            child = deepCloneFunction(parent)
+        } else { // 纯对象
+            // 处理对象原型
+            proto = Object.getPrototypeOf(parent)
+            // 利用Object.create切断原型链
+            child = Object.create(proto)
+        }
+
+        // 处理循环引用
+        const index = parents.indexOf(parent)
+
+        if (index !== -1) {
+            // 如果父数组存在本对象,说明之前已经被引用过,直接返回此对象
+            return children[index]
+        }
+        parents.push(parent)
+        children.push(child)
+
+        for (const i in parent) { // 递归
+            child[i] = _clone(parent[i])
+        }
+
+        return child
+    }
+    return _clone(parent)
+}
+
+const o = {
+    a: 1,
+    b: {
+        c: 2,
+        d: {
+            e: [],
+            g: /\d+/,
+            h: new Date(),
+            i: new RegExp('/\\w+/'),
+            f: undefined,
+            k: null
+        }
+    },
+    e: [1, 2, 3]
+}
+const o1 = deepClone(o)
+// console.log('%c [ o ]-101', 'font-size:13px; background:pink; color:#bf2c9f;',o)
+// console.log('%c [ o1 ]-101', 'font-size:13px; background:pink; color:#bf2c9f;',o1)
+
+// window.addEventListener('beforeunload', (event) => {
+//   // Cancel the event as stated by the standard.
+//   event.preventDefault()
+//   // Chrome requires returnValue to be set.
+//   event.returnValue = ''
+//   alert(1)
+// })
+
+
+// window.addEventListener('beforeunload', (event) => {
+//     event.preventDefault()
+
+//     var message = "I'm really going to miss you if you go.";
+
+//     event.returnValue = message;
+
+//     return message;
+// })
+/**
+ * @param {any} a：比较的值
+ * @param {any} b：其他要比较的值
+ */
+//  const isEquals = function (a, b) {
+//     // 基本类型：number、string、boolean、null、undefined
+//     if (a === b) return true
+//     // 引用类型：RegExp
+//     if (a instanceof RegExp && b instanceof RegExp) return a.toString() === b.toString()
+//     // 引用类型：Date
+//     if (a instanceof Date && b instanceof Date) return a.getTime() === b.getTime()
+//     // 引用类型：Function
+//     if (!a || !b || (typeof a !== 'object' && typeof b !== 'object')) return a === b
+//     // // Array.prototype === Array.prototype : true;  Object.prototype === Object.prototype: true; Array.prototype === Object.prototype : false
+//     if (a.prototype !== b.prototype) return false
+//     // 只剩下引用类型：Array、Object， a 和 b 引用是否都不是同一个对象
+//     const keys = Object.keys(a)
+//     // 判断 a 和 b 是否拥有相同的属性数量
+//     if (keys.length !== Object.keys(b).length) return false
+//     // 类型判断函数
+//     const type = o => Object.prototype.toString.call(o).slice(8, -1)
+//     // 引用类型：a 和 b 都是 Array 或 Object
+//     return ((Array.isArray(a) && Array.isArray(b) && a.length===b.length) || (type(a) == 'Object' && type(b) == 'Object')) && keys.every(k => isEquals(a[k], b[k]))
+// }
+
+
+const isEquals = function(a, b, checked = new Set()) {
+    // 提前返回不同类型的值
+    if (typeof a !== typeof b) return false;
+
+    // 处理循环引用
+    if (typeof a === 'object' && typeof b === 'object') {
+        if (checked.has(a) && checked.has(b)) return true;
+        checked.add(a);
+        checked.add(b);
+    }
+
+    // 基本类型的值直接比较
+    if (a === b || (Number.isNaN(a) && Number.isNaN(b))) return true;
+
+    // 检查引用类型的值
+    if (typeof a === 'object') {
+        // 如果是日期对象，比较时间戳
+        if (a instanceof Date && b instanceof Date) return a.getTime() === b.getTime();
+        // 如果是正则表达式，比较字符串形式
+        if (a instanceof RegExp && b instanceof RegExp) return a.toString() === b.toString();
+        // 如果是 Map，转换为普通对象进行比较
+        if (a instanceof Map && b instanceof Map) {
+            const objA = Object.fromEntries(a.entries());
+            const objB = Object.fromEntries(b.entries());
+            return isEquals(objA, objB, checked);
+        }
+        // 如果是数组或对象，递归比较属性
+        if (Array.isArray(a) && Array.isArray(b) || Object.prototype.toString.call(a) === '[object Object]' && Object.prototype.toString.call(b) === '[object Object]') {
+            const keysA = Object.keys(a).sort(); // 对属性排序
+            const keysB = Object.keys(b).sort(); // 对属性排序
+            // 检查属性数量是否相同
+            if (keysA.length !== keysB.length) return false;
+            // 检查每个属性是否相等
+            return keysA.every((key, index) => key === keysB[index] && isEquals(a[key], b[key], checked));
+        }
+    }
+
+    // 其他情况直接返回 false
+    return false;
+}
+function scientificToNonScientific(num, precision) {
+    // 将科学计数法表示的数字转换为字符串
+    let str = num.toString();
+
+    // 判断是否为科学计数法
+    if (str.indexOf('e') !== -1) {
+        let parts = str.split('e');
+        let base = parseFloat(parts[0]); // 基数部分
+        let exponent = parseInt(parts[1]); // 指数部分
+        
+        // 计算结果
+        let result = base * Math.pow(10, exponent);
+        
+        // 保留指定小数位数
+        let fixedResult = parseFloat(result.toFixed(precision));
+
+        // 转换为字符串并返回
+        return fixedResult.toString();
+    } else {
+        // 如果不是科学计数法，则直接返回原始字符串
+        return num.toString();
+    }
+}
+
+// 示例
+let scientificNumber = 1.23e5; // 科学计数法表示的数字
+let scientificNumber1 = 1e-7; // 科学计数法表示的数字
+let nonScientificString = scientificToNonScientific(scientificNumber, 2); // 转换为非科学计数法的字符串，保留两位小数
+
+// console.log(nonScientificString); // 输出 "123000.00"
+
+// 获取小数位数
+function getDecimalPlaces(str) {
+    // 将字符串转换为小数
+    let num = parseFloat(str);
+
+    // 判断是否为小数
+    if (isNaN(num) || num % 1 === 0) {
+        return 0; // 如果不是小数，返回0
+    } else {
+        // 使用正则表达式获取小数部分的字符串表示
+        let decimalPart = str.match(/\.(\d+)/);
+
+        // 如果小数部分存在，则返回它的长度，否则返回0
+        return decimalPart ? decimalPart[1].length : 0;
+    }
+}
+/**
+ * 四舍五入到指定位数
+ * @param {Number} n:小数
+ * @param {Number} decimals ：四舍五入到指定位数
+ */
+const round = function (n, decimals) {
+    let ret = String(Number(n))
+    // 检查是否为科学计数法
+    const match = ret.match(/^(\d+(?:\.\d+)?)(?:e([+-]?\d+))?$/i);
+    // 如果是科学计数法，则先转换为非科学计数法
+    if (match) {
+        // 进一步检测
+        if(!match[2] && match[0] === match[1] && !match[0].includes('e')){ // 1.23e5 ['123000', '123000', undefined, index: 0, input: '123000', groups: undefined]
+            ret = match[0]
+        }else{
+            // 系数部分
+            const coefficient = match[1]; 
+            // 指数部分
+            let exponent = match[2] ? parseInt(match[2]) : 0;
+            // 处理指数部分
+            let result = coefficient;
+
+            const dight = getDecimalPlaces(result)
+            if(dight){
+                result = result.replace('.','')
+                exponent = exponent - dight
+            }
+
+            if (exponent > 0) {
+                // 在系数后面补零
+                for (let i = 0; i < exponent; i++) {
+                    result += '0';
+                }
+            } else if (exponent < 0) {
+                // 在系数前面补零
+                result = '0.' + '0'.repeat(Math.abs(exponent) - 1) + coefficient.replace('.', '');
+            }
+            ret =  result;
+        }
+    } else {
+        ret =  n
+    }
+    console.log('%c [ ret ]-298', 'font-size:13px; background:pink; color:#bf2c9f;', ret)
+    if(decimals){
+        ret = (1* ret).toFixed(decimals)
+        return ret
+    } else {
+        return ret
+    }
+    
+}
+
+function round1(num, decimals = 0){
+    return Math.round(num*10**decimals) / 10**decimals
+}
+
+function round111(num, decimals){
+    const factor = 10 ** decimals;
+    let result = Math.round(num * factor) / factor;
+    if(decimals===undefined){
+        return result
+    } else {
+        
+    }
+}
+
+
+
+/**
+ * 计算方法 calc
+ * @param { number } type ：0 加  1 减 2 乘 3 除
+ * @param { String | Number } a ：计算数a
+ * @param { String | Number } b ：计算数b
+ * @param { Number } digit  ：结果保留的位数
+ * @return Number | String
+ */
+const calc111 = function (type, a, b, digit) {
+    // 把最长小数位数变成整数需要的10的方的数
+    const maxNum = Math.pow(10, Math.max(a.toString().split('.')[1]?.length || 0, b.toString().split('.')[1]?.length || 0))
+    const result = type===0 ? (((maxNum * a) + (maxNum * b)) / maxNum) : 
+    type===1 ? (((maxNum * a) - (maxNum * b)) / maxNum) :
+    type===2 ? ((maxNum * a) * (maxNum * b) / (maxNum * maxNum)) :
+    ((maxNum * a) / (maxNum * b))
+    if(digit){// 传入保留小数位数 四舍五入并返回结果
+        return round(result, digit)
+    } else {
+        return result
+    }
+
+    // const tyeps = [
+    //     round((Math.round(maxNum * a) + Math.round(maxNum * b)) / maxNum, digit), //加
+    //     round((Math.round(maxNum * a) - Math.round(maxNum * b)) / maxNum, digit), //减
+    //     round((Math.round(maxNum * a) * Math.round(maxNum * b)) / (maxNum * maxNum), digit), //乘
+    //     round(Math.round(maxNum * a) / Math.round(maxNum * b), digit) //除
+    // ]
+    // const str = String(round(tyeps[type], digit || 0))
+    // if (digit) {
+    //     if (str.includes('.')) return str.split('.')[0] + '.' + str.split('.')[1].padEnd(digit, 0)
+    //     return (str + '.').padEnd((str + '.').length + digit, 0)
+    // } else {
+    //     return tyeps[type]
+    // }
+}
+
+const calc = function (type, a, b, digit) {
+    let r1, r2
+    try {
+        r1 = a.toString().split('.')[1].length
+    } catch (e) {
+        r1 = 0
+    }
+    try {
+        r2 = b.toString().split('.')[1].length
+    } catch (e) {
+        r2 = 0
+    }
+    let maxLen = Math.pow(10, Math.max(r1, r2))
+    let tyeps = [
+        round((Math.round(maxLen * a) + Math.round(maxLen * b)) / maxLen, digit), //加
+        round((Math.round(maxLen * a) - Math.round(maxLen * b)) / maxLen, digit), //减
+        round((Math.round(maxLen * a) * Math.round(maxLen * b)) / (maxLen * maxLen), digit), //乘
+        round(Math.round(maxLen * a) / Math.round(maxLen * b), digit) //除
+    ]
+    let str = String(round(tyeps[type], digit || 0))
+    console.log('%c [ str ]-289', 'font-size:13px; background:pink; color:#bf2c9f;', str)
+    if (digit) {
+        if (str.includes('.')) return str.split('.')[0] + '.' + str.split('.')[1].padEnd(digit, 0)
+        return (str + '.').padEnd((str + '.').length + digit, 0)
+    } else {
+        return tyeps[type]
+    }
+}
+
+/**
+ * 计算方法 calc
+ * @param {Number} type: 运算类型，0 加，1 减，2 乘，3 除
+ * @param {String | Number} a: 计算数a
+ * @param {String | Number} b: 计算数b
+ * @param {Number} digit: 结果保留的位数
+ * @return {Number | String}
+ */
+const calc11 = function(type, a, b, digit) {
+    // 输入验证
+    if (typeof a !== 'number' || typeof b !== 'number' || isNaN(a) || isNaN(b)) {
+        throw new Error('参数必须是数值类型');
+    }
+    if (type === 3 && b === 0) {
+        throw new Error('除数不能为 0')
+    }
+
+    // 确定最大位数
+    const r1 = a.toString().includes('.') ? a.toString().split('.')[1].length : 0;
+    const r2 = b.toString().includes('.') ? b.toString().split('.')[1].length : 0;
+    const maxLen = Math.pow(10, Math.max(r1, r2));
+
+    // 执行运算
+    let result;
+    switch (type) {
+        case 0:
+            result = (a * maxLen + b * maxLen) / maxLen;
+            break;
+        case 1:
+            result = (a * maxLen - b * maxLen) / maxLen;
+            break;
+        case 2:
+            result = (a * maxLen * b) / (maxLen * maxLen);
+            break;
+        case 3:
+            result = (a * maxLen) / (b * maxLen);
+            break;
+        default:
+            return NaN;
+    }
+
+    // 四舍五入并返回结果
+    return digit !== undefined ? round(result, digit) : result;
+}
+
+// 测试用例
+// console.log(calc(0, 2, 3)); // 加法测试：5
+// console.log(calc(1, 5, 3)); // 减法测试：2
+// console.log(calc(2, 2.5, 3)); // 乘法测试：7.5
+// console.log(calc(3, 10, 2)); // 除法测试：5
+
+// console.log(round(0.00000001)); // 带小数位数的加法测试：3.80
+// console.log(calc(1, 5.678, 3.45, 3)); // 带小数位数的减法测试：2.228
+console.log(calc111(2, 1.23, 4.56, 2)); // 带小数位数的乘法测试：5.5968
+// console.log(calc(3, 10, 3, 3)); // 带小数位数的除法测试：3.333
+
+// console.log(calc(0, 1.235, 2.567, 2)); // 四舍五入测试：3.80
+// console.log(calc(1, 5.678, 3.451, 3)); // 四舍五入测试：2.228
+
+// console.log(calc(3, 10, 0)); // 除数为 0 的情况测试：Infinity
+// console.log(calc(3, 0, 5)); // 除数为 0 的情况测试：0
+
+// console.log(calc(0, 'abc', 2)); // 非数字类型的参数测试：NaN
+// console.log(calc(2, 1.23, 'def')); // 非数字类型的参数测试：NaN
+// console.log(calc(4, 5, 2)); // 无效的运算类型测试：NaN
+
+// console.log(calc(2, 0.0000, 2)); // 无效的运算类型测试：NaN
+
+</script>
+</html>

@@ -1,0 +1,10 @@
+node_modules/
+src/
+rollup.config.js
+.babelrc
+.prettierrc.js
+package-lock.json
+package.json
+README.MD
+.editorconfig
+index.html

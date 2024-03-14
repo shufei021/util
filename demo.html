@@ -1,0 +1,1342 @@
+<!--
+ * @Author: shufei 1017981699@qq.com
+ * @Date: 2022-12-29 13:41:36
+ * @LastEditors: 舒飞 1017981699@qq.com
+ * @LastEditTime: 2023-09-18 10:39:47
+ * @FilePath: \zztx_utils\demo.html
+ * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no">
+    <title>Document</title>
+</head>
+<style>
+    /* 渐变色从红色到绿色 */
+    *{margin:0;padding: 0;}
+    .container{
+        width: 100vw;
+        height: 100vh;
+        overflow-x: hidden;
+        overflow-y:auto;
+    }
+    ul{
+        padding-left:0;
+        margin:0;
+    }
+    ul li{
+        width: 100%;
+        list-style: none;
+    }
+    ul li img{
+        width: 100vw;
+        vertical-align:top;
+        height:400px;
+        background:url(https://img.zcool.cn/community/01dc1c587d86c1a8012060c8f0198c.gif) no-repeat center center;
+    }
+    .loading-wrap{
+        width: 100%;
+        height: 40px;
+        text-align:center;
+        line-height: 40px;
+    }
+    .text-loading {
+        display: inline-block;
+        height: 1em;
+        line-height: 1;
+        text-align: left;
+        vertical-align: -0.25em;
+        overflow: hidden;
+    }
+    .text-loading::before {
+        display: block;
+        content: '...\a..\a.';
+        white-space: pre-wrap;
+        animation: dot 1s infinite step-start both;
+    }
+    @keyframes dot {
+        33% {
+            transform: translateY(-2em);
+        }
+        66% {
+            transform: translateY(-1em);
+        }
+    }
+    .trapezoid {
+      width: 80px;
+      height: 0;
+      border-top: 21px solid blue;
+      border-left: 21px solid transparent;
+      border-right: 21px solid transparent;
+    }
+    .wrap{
+        position: relative;
+        min-width: 40px;
+        max-width: 100px;
+        height: 18px;
+        background-color: red;
+    }
+    .aa,.bb{
+        text-align: center;
+        padding: 0px 20px 2px;
+        position: relative;
+        text-align: center;
+        display: inline-block;
+        font-size: 12px;
+        position: absolute;
+    }
+    .bb{
+        z-index: 1000;
+    }
+    .aa::before {
+       content: ''; /* 用伪元素来生成一个矩形 */
+       position: absolute;
+       top: 0;
+       right: 0;
+       bottom: 0;
+       left: 0;
+       z-index: -1;
+       background: #ffffff;
+       border: 1px solid #e6ebf1;
+       border-top: 0;
+       transform: perspective(0.5em) rotateX(357deg);
+       box-shadow: 0 3px 3px rgba(0, 0, 0, 0.15);
+     }
+     #wrap{
+        width: 400px;
+        height: 400px;
+        overflow: auto;
+     }
+</style>
+<body>
+    <!-- <div class="container" style="display: none;">
+        <ul></ul>
+        <div class="loading-wrap"> <span class="text-loading"></span> </div>
+    </div>
+    <input type="text" id="ipt">
+    <div class="wrap">
+        <div class="aa"><a href="">更多</a></div>
+        <a href="" class="bb">更多</a>
+    </div> -->
+</body>
+<script src="build/lib/date/index.js"></script>
+<script src="build/lib/index.js"></script>
+<!-- <script src="https://unpkg.com/dayjs@1.8.21/dayjs.min.js"></script> -->
+<!-- <script src="https://unpkg.com/dayjs@1.8.21/plugin/relativeTime"></script>
+<script src="https://unpkg.com/dayjs@1.8.21/locale/zh-cn.js"></script> -->
+<script src="https://cdn.bootcdn.net/ajax/libs/vConsole/3.15.0/vconsole.min.js"></script>
+<!-- <script src="keybord.js"></script> -->
+<!-- <script src="https://cdn.bootcdn.net/ajax/libs/keyboardjs/2.7.0/keyboard.js"></script> -->
+<script>
+    // 获取那些按钮可以可以显示
+    function combinFliter(btnsMap={},param={}){
+        return Object.keys(btnsMap).flatMap(k=> btnsMap[k](param) ? [k] :[])       
+    }
+
+    // keyboardJS.bind('enter', function(e) {  // this function will once run once even if a is held  
+    //     e.preventRepeat();  
+    //     console.log('a is pressed');
+    // });
+    // // 获取那些按钮可以可以显示
+    // function btnCombin(btnMap={},param={}){
+    //     return Array.from(Object.keys(btnMap)).reduce((p,c,i,a)=>{
+    //         if(btnMap[c](p.param)) p.btns.push(c)
+    //         if(i === a.length-1) p = p.btns
+    //         return p
+    //     },{
+    //         btns:[],
+    //         param
+    //     })
+
+    // }
+    // const btnTypes = btnCombin(
+    //     {
+    //         1:({list})=>{
+    //             return list.includes(1)
+    //         },
+    //         2:({list})=>{
+    //             return list.includes(2)
+    //         },
+    //         3:({list})=>{
+    //             return list.includes(3)
+    //         },
+    //         4:({list})=>{
+    //             return list.includes(4)
+    //         },
+    //         5:({list})=>{
+    //             return list.includes(5)
+    //         },
+    //     },
+    //     {
+    //         list:[1,2,3,4]
+    //     }
+    // )
+
+    // console.log('%c [ btnTypes ]-159', 'font-size:13px; background:pink; color:#bf2c9f;', btnTypes)
+    // const viewBtns = btnsMap.reduce((p,c)=>{
+
+    // },[])
+    // console.log('%c [ rutils.date.endOf("month") ]-130', 'font-size:13px; background:pink; color:#bf2c9f;', rutils.date.endOf('month'))
+    // ipt.addEventListener("keydown", function(e){
+    //     // setTimeout(()=>{
+    //     //     console.log('%c [ setTimeout 逻辑 ]-87', 'font-size:13px; background:pink; color:#bf2c9f;',e.target.value);
+    //     // })
+    //     e.preventDefault()
+
+    //     //  setTimeout(()=>{
+    //     //     console.log('%c [ setTimeout 逻辑 ]-87', 'font-size:13px; background:pink; color:#bf2c9f;',e.target.value);
+    //     // })
+    // })
+// console.log('%c [ date.endOf("month") ]-82', 'font-size:13px; background:pink; color:#bf2c9f;', date.endOf('month'))
+// function isScrollerVisible(scrollerEl, wrapEl, item) {
+//     const scroller =typeof scrollerEl === 'string' ?  document.querySelector(scrollerEl):scrollerEl
+//     const wrap =typeof wrapEl === 'string' ?  scroller.querySelector(wrapEl) : wrapEl
+//     const activeItem = typeof item === 'string'? wrap.querySelector(item):item
+//     const top = activeItem.getBoundingClientRect().top - wrap.offsetTop
+//     console.log('%c [ top ]-86', 'font-size:13px; background:pink; color:#bf2c9f;', top)
+//     console.log('%c [ scroller.offsetHeight - activeItem.offsetHeight ]-88', 'font-size:13px; background:pink; color:#bf2c9f;', scroller.offsetHeight - activeItem.offsetHeight)
+//     return top>=0 && top <= scroller.offsetHeight - activeItem.offsetHeight
+// }
+// // new VConsole()
+// let page=1
+// const container = document.querySelector('.container ul')
+// const base64 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAAXNSR0IArs4c6QAAABdJREFUKFNjZCASMBKpjmFUId6QIjp4AAppAAuXjCs4AAAAAElFTkSuQmCC'
+// // init()
+// function init() {
+//     getList().then(()=>{
+//         const imgs = container.querySelectorAll('img')
+//         imgs.forEach(img=>{
+//             console.log('%c [ img ]-98', 'font-size:13px; background:pink; color:#bf2c9f;', img)
+//             console.log('%c [ isScrollerVisible(".container","ul",img) ]-91', 'font-size:13px; background:pink; color:#bf2c9f;', isScrollerVisible('.container','ul',img))
+//             if(isScrollerVisible('.container','ul',img)){
+//                 img.src = img.getAttribute('data-src')
+//             }
+//         })
+//     })
+// }
+// document.querySelector('.container').addEventListener('scroll',()=>{
+//     console.log('%c [ isScrollBottom(".container") ]-95', 'font-size:13px; background:pink; color:#bf2c9f;', isScrollBottom('.container'))
+//     if(isScrollBottom('.container')){
+//         init()
+//     }
+// })
+// function getList(){
+//     return new Promise(resolve=> {
+//         fetch(`https://picsum.photos/v2/list?page=${page++}&limit=10`).then((response)=>response.json()).then((list)=>{
+//             let str = ''
+//             for(let i=0; i<list.length; i++){
+//                 str+=`<li style="width:100px;height:400px"><img src="${base64}" data-src="${list[i].download_url}" alt="" ></li>`
+//             }
+//             container.insertAdjacentHTML('beforeend',str)
+//             resolve()
+//         })
+//     })
+// }
+
+// ref('voucher.aaa')
+// ref('voucher1.aaa1')
+// const name = '$refs.voncher.$refs.xTable.resetColumn'
+// const arr = name.split('.')
+const isScrollBottom = (el, offset) => {
+    el = typeof el === "string" ? document.querySelector(el) : el;
+    if(el){
+        const diff = el.scrollHeight - el.scrollTop - el.clientHeight
+        return offset ? diff < offset : diff === 0;
+    } else {
+        return false
+    }
+};
+function getPaddingTopBottomSize (elem) {
+  if (elem) {
+    const computedStyle = getComputedStyle(elem)
+    const paddingTop = parseFloat(computedStyle.paddingTop)
+    const paddingBottom = parseFloat(computedStyle.paddingBottom)
+    return paddingTop + paddingBottom
+  }
+  return 0
+}
+// document.querySelector('#wrap').addEventListener('scroll', function(){
+//     console.log('%c [ isScrollBottom ]-263', 'font-size:13px; background:pink; color:#bf2c9f;', getPaddingTopBottomSize(this))
+// });
+
+
+const a = [
+    [11,14,	17,	19,	21],
+    [3,16,	21,	26,	32],
+    [6,16,	18,	28,	29],
+    [8,11,12,19,35],
+    [3 ,12, 20, 26 ,35],
+    [8, 14, 16 ,22 ,24],
+    [3, 4, 16 ,19, 24],
+   
+]
+const lv1 = a.reduce((p,c)=>{
+    p.push(...c)
+    return p
+},[])
+const only = [...new Set(lv1)]
+// console.log('%c [ only ]-289', 'font-size:13px; background:pink; color:#bf2c9f;', only.sort((a,b)=>a-b))
+
+const end = [
+    [1, 5],
+    [3 ,12],
+    [7 ,11],
+    [11, 12], 
+    [2, 12],
+    [9 ,12],
+    [4, 5],
+    [7 ,11],
+]
+const last = end.reduce((a,b)=>{
+    a.push(...b)
+    return a
+},[])
+// console.log(get(lv1))
+function get(arr){
+    const ret = {}
+    for (let index = 0; index < arr.length; index++) {
+        const key = arr[index];
+        if(ret[key]){
+            ret[key]++
+        }else{
+            ret[key] = 1
+        }
+    }
+    return ret
+}
+// console.log('%c [ last ]-293', 'font-size:13px; background:pink; color:#bf2c9f;', get(last))
+// 业务类型
+ const billSpecialTypeEnum = {
+  9: '销售出库单',
+  4: '收款单(正常收款)',
+  4001: '收款(收预收款)',
+  5: '付款(正常付款)',
+  5001: '付款(付预付款)',
+  7: '采购入库单(分摊费用)',
+  7001: '采购入库单(不分摊费用)',
+  11: '其他入库(盘盈入库)',
+  11001: '其他入库(其他入库)',
+  12: '其他出库(盘亏出库)',
+  12001: '其他出库(其他出库)',
+  13: '成本调价',
+  19: '应收调整',
+  26: '应付调整',
+  28: '组装拆装',
+  29: '其他收入(往来收入)',
+  29001: '其他收入(现金收入)',
+  30: '费用(现金费用)',
+  30001: '费用(往来费用)',
+  33: '现金银行转款单',
+}
+const 单据类型 = [
+    '采购入库单', // 7
+    '采购退货单', // 8
+    '付款单',// 4
+    '销售出库单', // 9
+    '销售退货单', // 6
+    '收款单',// 5
+    '银行存取款单', //33
+    '收入单', // 29
+    '费用单', // 30
+    '应收调整单', // 19
+    '应付调整单', // 26
+    '其他出库单', // 12
+    '其他入库单', // 11
+    '成本调价单', // 13
+    '组装拆装单' // 28
+    ]
+const 业务类型 = [
+    '采购分摊费用',// 7 
+    '采购不分摊费用',// 7001
+    '正常付款',//5
+    '付预付款',//5001
+    '销售出库', // 9
+    '正常收款', // 4
+    '收预收款', //4001
+    '现金费用',// 30
+    '往来费用', // 30001
+    '现金收入',//29001
+    '往来收入',//29
+    '调整应收',//19
+    '调整应付',//26
+    '调整成本',//13
+    '盘盈入库',//11
+    '其他入库',//11001
+    '盘亏出库',//12
+    '其他出库',//12001
+    '组装拆装',//28
+    '银行存取款' //33
+    ]
+const billTypeEnum = {
+  9: { label: '销售出库单', path: '/dhpc/order/sales-delivery-detail', index: 14 }, 
+  4: { label: '收款单', path: '/dhpc/bill/receipt-detail', index: 3 },
+  5: { label: '付款单', path: '/dhpc/bill/pay-detail', index: 2 },
+  6: { label: '销售退货单', path: '/dhpc/order/sales-return/detail', index: 4 },
+  7: { label: '采购入库单', path: '/dhpc/bill/in-storage-detail', index: 0 }, 
+  8: { label: '采购退货单', path: '/dhpc/bill/refund-detail', index: 1 },
+  11: { label: '其他入库单', path: '/dhpc/bill/in-stock-detail', index: 5 },
+  12: { label: '其他出库单', path: '/dhpc/bill/out-stock-detail', index: 6 },
+  13: { label: '成本调价单', path: '/dhpc/bill/cost-pricing-detail', index: 7 },
+  19: { label: '应收调整单', path: '/dhpc/bill/adjustment-detail', index: 8 },
+  26: { label: '应付调整单', path: '/dhpc/bill/adjustment-detail', index: 9 },
+  28: { label: '组装拆装单', path: '/dhpc/bill/dismounting-detail', index: 10 },
+  29: { label: '其他收入单', path: '/dhpc/bill/other-receipt-detail', index: 11 },
+  30: { label: '费用单', path: '/dhpc/bill/fee-bill-detail', index: 12 },
+  33: { label: '现金银行转款单', path: '/dhpc/bill/transfer-detail', index: 13 }
+}
+
+function switchData({data = null, sortAlias = 'index', typeAlias = 'type', switchOrign = 'object', cb = null, mapValueName = '', types = [] }){
+    if(!data) return
+    if(Array.isArray(data) || switchOrign === 'array'){
+        return data.filter(i=>!types.length || (types.length && types.includes(i[typeAlias]*1))).reduce((p,c)=>{
+            p[c[typeAlias]] =typeof cb ==="function"? cb(c) : mapValueName? c[mapValueName] : c
+            return p
+        },{})
+    } else {
+        return Object.keys(data).filter(i=>!types.length || (types.length && types.includes(i*1))).reduce((p,c)=>{
+            console.log('%c [ {...data[c],[typeAlias]:c*1} ]-329', 'font-size:13px; background:pink; color:#bf2c9f;', {...data[c],[typeAlias]:c*1})
+            p[data[c][sortAlias]] = typeof cb ==="function" ? cb({...data[c], [typeAlias]: c*1}) : {...data[c],[typeAlias]:c*1}
+            return p
+        },[]).filter(Boolean)
+    }
+}
+// console.log('%c [ rutils.switchData({ data: billTypeEnum, types:[6,12,33],cb:(i)=>({name:i.label}) }) ]-334', 'font-size:13px; background:pink; color:#bf2c9f;', switchData({ data: billTypeEnum, types:[6,12,33],cb:(i)=>{
+//     console.log('%c [ i ]-337', 'font-size:13px; background:pink; color:#bf2c9f;', i)
+//     return i.label
+// } }))
+const ret = switchData({data: billTypeEnum , sortAlias: 'index', typeAlias:'type', switchOrign:'object', types:[4,5,6]}) 
+// console.log('%c [ ret ]-414', 'font-size:13px; background:pink; color:#bf2c9f;', ret)
+
+const ret1 = switchData({data: ret , sortAlias: 'index', typeAlias:'type', switchOrign:'array', mapValueName:'label'})
+// console.log('%c [ ret1 ]-416', 'font-size:13px; background:pink; color:#bf2c9f;', ret1)
+
+const arr11 = [{id:1, obj:{a:{b:11}}},{id:2, obj:{a:{b:22}}},{id:3,obj:{a:{b:33}}}]
+const obj11 = {obj:{a:{b:1}}}
+$$ = (target, defaultVal, cb) =>{
+    if(Array.isArray(target) && typeof cb === 'function'){
+        target = target.find(i=>cb(i)) || {}
+    }
+    return new Proxy(target, {
+        get: (target, propKey) => {
+            const proKeyArr = propKey.split('.')
+            return proKeyArr.reduce((a, b) => a?.[b] || defaultVal, target)
+        }
+    })
+}
+// $$(obj11)['obj.a.b']
+// console.log('%c [ $(obj11)["obj.a.b"] ]-434', 'font-size:13px; background:pink; color:#bf2c9f;', $$(obj11)['obj.a.b'])
+// console.log('%c [ $(obj11)["obj.a.b1"] ]-434', 'font-size:13px; background:pink; color:#bf2c9f;', $$(obj11)['obj.a.b1'])
+// console.log('%c [ $(obj11,"默认值")["obj.a.b1"] ]-434', 'font-size:13px; background:pink; color:#bf2c9f;', $$(obj11,'默认值')['obj.a.b1'])
+// console.log('%c [ $(obj11,"默认值")["obj.a.b"] ]-434', 'font-size:13px; background:pink; color:#bf2c9f;', $$(obj11,'默认值')['obj.a.b'])
+
+// console.log('%c [ $(arr11,item=>item.id === 3333,"默认值")["obj.a.b"] ]-434', 'font-size:13px; background:pink; color:#bf2c9f;', $$(arr11,'默认值', item=>item.id === 3333)['obj.a.b'])
+// console.log('%c [ $(arr11,item=>item.id === 3333)["obj.a.b"] ]-434', 'font-size:13px; background:pink; color:#bf2c9f;', $$(arr11,null,item=>item.id === 3333)['obj.a.b'])
+// console.log('%c [ $(arr11,item=>item.id === 3)["obj.a.b"] ]-434', 'font-size:13px; background:pink; color:#bf2c9f;', $$(arr11,null,item=>item.id === 3)['obj.a.b'])
+// console.log('%c [ $(arr11)["5.obj.a.b"] ]-434', 'font-size:13px; background:pink; color:#bf2c9f;', $$(arr11)['5.obj.a.b'])
+// console.log('%c [ $(arr11)["0.obj.a.b"] ]-434', 'font-size:13px; background:pink; color:#bf2c9f;', $$(arr11)['0.obj.a.b'])
+
+// 获取今年的最后一天日期
+// console.log('%c [ 获取今年的最后一天日期 ]-365', 'font-size:13px; background:pink; color:#bf2c9f;', rutils.date.endOf('year'))
+
+
+// 获取本月的最后一天日期
+// console.log('%c [ 获取本月的最后一天日期 ]-369', 'font-size:13px; background:pink; color:#bf2c9f;', rutils.date.endOf('month'))
+
+
+// 获取指定日期 '2021-2-2' 所属的月的最后一天日期
+// console.log('%c [ 获取指定日期 "2021-2-2" 所属的月的最后一天日期 ]-373', 'font-size:13px; background:pink; color:#bf2c9f;', rutils.date.endOf('month', '2021-2-2'))
+// "2021-02-28 23:59:59"
+
+// 获取指定日期 '2021-2-2' 所属日期的 最后一刻
+// console.log('%c [ 获取指定日期 "2021-2-2" 所属日期的 最后一刻 ]-377', 'font-size:13px; background:pink; color:#bf2c9f;', rutils.date.endOf('date', '2021-2-2') )
+//"2021-02-02 23:59:59"
+
+// 获取指定日期 '2021-2-2' 所属时的 最后一刻
+// console.log('%c [ 获取指定日期 "2021-2-2" 所属时的 最后一刻 ]-381', 'font-size:13px; background:pink; color:#bf2c9f;', rutils.date.endOf('hour', '2021-2-2'))
+ // "2021-02-02 00:59:59"
+
+// 获取指定日期 '2021-2-2' 所属时的 最后一刻
+// console.log('%c [ 获取指定日期 "2021-2-2" 所属时的 最后一刻 ]-385', 'font-size:13px; background:pink; color:#bf2c9f;', rutils.date.endOf('minute', '2021-2-2'))
+ // "2021-02-02 00:00:59"
+
+// 获取指定日期 '2021-2-2' 所属时的 最后一刻
+// console.log('%c [ 获取指定日期 "2021-2-2" 所属时的 最后一刻 ]-389', 'font-size:13px; background:pink; color:#bf2c9f;', rutils.date.endOf('second', '2021-2-2'))
+ // "2021-02-02 00:00:00"
+
+// 获取指定日期 '2021-2-2' 所属时的 最后一刻
+// console.log('%c [ 获取指定日期 "2021-2-2" 所属时的 最后一刻 ]-393', 'font-size:13px; background:pink; color:#bf2c9f;', rutils.date.endOf('millisecond', '2021-2-2', 'YYYY-MM-DD HH:mm:ss SSS'))
+ // "2021-02-02 00:00:00 000"
+
+// 获取指定日期 '2021-6-14' 所属周的的 最后一天（周日）日期
+// console.log('%c [ 获取指定日期 "2021-6-14" 所属周的的 最后一天（周日）日期 ]-397', 'font-size:13px; background:pink; color:#bf2c9f;', rutils.date.endOf('week', '2021-6-14'))
+ // "2021-06-20 23:59:59"
+
+// rutils.date.endOf('quarter', '2021-5-14') // "2021-06-30 23:59:59"
+
+// rutils.date.endOf('quarter', '2021-6-14') // "2021-06-30 23:59:59"
+
+// rutils.date.endOf('quarter', '2021-4-14') // "2021-06-30 23:59:59"
+
+// rutils.date.endOf('quarter', '2021-3-14') // "2021-03-31 23:59:59"
+
+// rutils.date.endOf('quarter', '2021-1-14') // "2021-03-31 23:59:59"
+
+// rutils.date.endOf('quarter', '2021-9-14') // "2021-09-30 23:59:59"
+
+// rutils.date.endOf('quarter', '2021-10-14') // "2021-12-31 23:59:59"
+
+// const App = (props) => {
+//   const { data } = props || {}
+//   const { name, age } = data ||{}
+//   console.log('%c [ name, age ]-422', 'font-size:13px; background:pink; color:#bf2c9f;', name, age)
+// }
+
+
+
+function $$(target, defaultVal, cb){
+    target = (Array.isArray(target) && typeof cb === 'function') ? (target.find(i=>cb(i)) || {}) : target
+    return new Proxy(target, {
+        get: (target, propKey) => propKey.split('.').reduce((a, b) => a?.[b] || defaultVal, target)
+    })
+}
+function switchData({data = null, sortAlias = 'index', typeAlias = 'type', switchType = 'object', cb = null, mapValueName = '', types = [] }){
+    if(!data) return
+    const filterCb = (t)=> !types.length || (types.length && types.includes(t*1))
+    if(Array.isArray(data) || switchType === 'array'){ // 数组 转 对象
+        return data.filter(i=>filterCb(i[typeAlias])).reduce((p,c)=>{
+            p[c[typeAlias]] = typeof cb ==="function" ? cb(c) : mapValueName ? c[mapValueName] : c
+            return p
+        },{})
+    } else { // 对象 转 数组
+        return Object.keys(data).filter(i=> filterCb(i)).reduce((p,c)=>{
+            const val = {...data[c],[typeAlias]:c*1}
+            p[data[c][sortAlias]] = typeof cb ==="function" ? cb(val) : val
+            return p
+        },[]).filter(Boolean)
+    }
+}
+
+const arr = [1,2,3,4,2,6]
+function getIndex(arr, startIndex,cb){
+    for(let i = 0; i < arr.length; i++){
+        if(i>startIndex && cb(arr[i])){
+            return i
+        }
+    }
+}
+const index = getIndex(arr,1,i=>i===2)
+
+const getAllIndexBy = function (arr,cb) {
+  return arr.reduce((p, c, i) => {
+    if(cb(c)){
+        p.push(i)
+    }
+    return p
+  }, [])
+}
+
+const arr1 = [1,2,3]
+
+// console.log('%c [  ]-552', 'font-size:13px; background:pink; color:#bf2c9f;', getAllIndexBy(arr1,i=>i===3))
+
+Array.prototype.myReduce = function(cb,initVal){
+   let initValue  = initVal===undefined ? undefined : initVal
+   for(let i = 0; i < this.length; i++){
+    if(initValue === undefined){
+        initValue = this[i]
+    } else {
+        initValue = cb(initValue, this[i], i,this)
+    }
+   }
+   return initValue
+}
+// const ret11 = arr1.myReduce((p, c, i,a) => {
+//     console.log('%c [ p ]-562', 'font-size:13px; background:pink; color:#bf2c9f;', p)
+//     console.log('%c [ c ]-562', 'font-size:13px; background:pink; color:#bf2c9f;', c)
+//     return p + c
+// },100)
+// console.log('%c [ ret11 ]-561', 'font-size:13px; background:pink; color:#bf2c9f;', ret11)
+
+let a1 = [1, 2, 3, 4, 5].map(i=>({id:i}))
+let b1 = [1, 2, 4, 5, 6].map(i=>({id:i}))
+// console.log(b1.flatMap(item=>{
+//     if(!a1.map(i=>i.id).includes(item.id)){
+//         return [item]
+//     } else{
+//         return []
+//     }
+// }))
+// a1.forEach((item,index,arr)=>{
+//     if(index===0){
+//         item = 9999
+//     }
+// })
+
+const arr1112 = Array.from({length: 1500},(_,i)=>{
+    return {
+        hh:{ user: 'zhangsan', info: { age: 22, ad: { name: '十里店', time: new Date('2022/1/1') } } },
+        hh1:{ user: 'zhangsan', info: { age: 22, ad: { name: '十里店', time: new Date('2022/1/1') } } },
+        a:{ user: 'zhangsan', info: { age: 22, ad: { name: '十里店', time: new Date('2022/1/1') } } },
+        b:{ user: 'zhangsan', info: { age: 22, ad: { name: '十里店', time: new Date('2022/1/1') } } },
+        c:{ user: 'zhangsan', info: { age: 22, ad: { name: '十里店', time: new Date('2022/1/1') } } },
+        d:{ user: 'zhangsan', info: { age: 22, ad: { name: '十里店', time: new Date('2022/1/1') } } },
+        e:{ user: 'zhangsan', info: { age: 22, ad: { name: '十里店', time: new Date('2022/1/1') } } },
+        f:{ user: 'zhangsan', info: { age: 22, ad: { name: '十里店', time: new Date('2022/1/1') } } },
+        h:{ user: 'zhangsan', info: { age: 22, ad: { name: '十里店', time: new Date('2022/1/1') } } },
+        j:i===1499? 9999 : i,
+    }
+})
+
+function cs(list){
+    console.time('time')
+    for(let i=0; i<list.length; i++){
+        const pre = list[i]
+        delete pre.hh
+        delete pre.hh1
+        for(let j=1; j<list.length;j++){
+            const next = list[j]
+            delete next.hh
+            delete next.hh1
+            if(rutils.isEquals(pre,next)){
+                // console.log('%c [ i ]-607', 'font-size:13px; background:pink; color:#bf2c9f;', i)
+                break;
+            }
+            
+        }
+    }
+    console.timeEnd('time')
+}
+
+// cs(arr1112)
+
+// 权限按钮组合
+function btnHander(type){
+    const btns =Array.from({length:20},(_,i)=>{
+        return {
+            id:i,
+            name:`按钮${i}`,
+            disabled:false, // 按钮是否禁止点击，
+            isShow:()=>true, // 按钮是否显示与否
+            permission: [] // 权限
+        }
+    })
+    btns.filter(v=>v.type===type)
+}
+// 搜索条件颗粒化 可配置化
+
+
+// func().then(res=>{
+
+// }).catch(tip=>{
+//     alert(tip)
+// })
+
+
+// this.beforeVaild =  aynss( ({ a1 }) => {
+//             if (a1.every((i) => !i.detailId)) return '转出费用单请添加数据'
+//         },
+//         ({ a2 }) => {
+//             if (a2.every((i) => Object.keys(i).length === 1)) return '转入费用单请添加数据'
+//         },
+//         ({ a1 }) => {
+//             const item = a1.find(i => Number(i.currentAssignMoney) === 0)
+//             if (item) return `${item.itemName}本次分配金额不能为空`
+//         },
+//         ({ a2 }) => {
+//             const item = a2.find(i => i.projectName && (i.money === undefined || Number(i.money) === 0))
+//             if (item) return `${item.projectName}项目金额不能为空`
+//         },
+//         ({ ft }) => {
+//             if (ft(this.tableTotal[0]?.currentAssignMoney || '0') !== ft(this.incomeTotal[0]?.money || '0')) return '分配金额不等于待分配费用金额'
+//         })
+//         this.beforeVaild.then()
+// function ft(){
+//     return new Promise((resolve, reject) => {
+//         (
+       
+//         ).then(resolve).catch(tip=>{
+//             alert(tip)
+//         })
+//     })
+// }
+
+
+// function aa(...args){
+//     console.log('%c [ arguments ]-678', 'font-size:13px; background:pink; color:#bf2c9f;', args)
+// }
+// aa(
+// ({ a1 }) => {
+//     if (a1.every((i) => !i.detailId)) return '转出费用单请添加数据'
+// },
+// ({ a2 }) => {
+//     if (a2.every((i) => Object.keys(i).length === 1)) return '转入费用单请添加数据'
+// },
+// ({ a1 }) => {
+//     const item = a1.find(i => Number(i.currentAssignMoney) === 0)
+//     if (item) return `${item.itemName}本次分配金额不能为空`
+// },
+// ({ a2 }) => {
+//     const item = a2.find(i => i.projectName && (i.money === undefined || Number(i.money) === 0))
+//     if (item) return `${item.projectName}项目金额不能为空`
+// },
+// ({ ft }) => {
+//     if (ft(this.tableTotal[0]?.currentAssignMoney || '0') !== ft(this.incomeTotal[0]?.money || '0')) return '分配金额不等于待分配费用金额'
+// }
+// )
+
+function asyncCheck(vaildList = [], commonParamMap = {}, errCallBack){
+    return function (successCallBack){
+        let ret = null
+        for (let i = 0; i < vaildList.length; i++) {
+            const item = vaildList[i]
+            if( typeof item === 'function'){
+                const result = item(commonParamMap)
+                if(result) {
+                    ret = result
+                    break
+                }
+            } else {
+                if(item) {
+                    ret=item
+                    break
+                }
+            }
+        }
+        if(ret){
+            errCallBack && errCallBack(ret)
+        } else {
+            successCallBack && successCallBack()
+           
+        }
+    }
+}
+
+
+const precheck = asyncCheck(
+[
+    ({ a }) =>{
+        if(a) return '第一个验证不通过'
+    },
+    ({ b }) =>{
+        if(b) return '第二个验证不通过'
+    },
+],
+{
+a:1,
+b:0
+},
+(err)=>{
+    alert(err)
+})
+
+
+
+
+// this.arra = [{id:1},{id:2}] //
+
+// this.arrb = arra
+
+// this.arra = [{id:1},{id:2},{id:3}]
+
+// this.arra.splice(0,this.arra.length, {id:1},{id:2},{id:3})
+
+// console.log('%c [ arr222 ]-750', 'font-size:13px; background:pink; color:#bf2c9f;', this.arrb)
+
+// const { a11, b, c} = this.arra.reduce((p,c,i,a)=>{
+//     p.a11 = p.a11 + c.id
+//     p.b = p.b + c.id
+//     p.c = p.c + c.id
+//     if(i === a.length - 1){
+//         p.a11 = "YYY" + p.a11
+//         p.b = "YYY2" + p.b
+//         p.c = "YYY3" + p.c
+//     }
+//     return p
+// },{a11:0,b:0,c:0})
+
+// console.log('%c [ a11, b, c ]-758', 'font-size:13px; background:pink; color:#bf2c9f;', a11, b, c)
+
+
+// this.$set(this.incomeTotal, 0, { ...this.incomeTotal[0],money:moneyTotal !== null ? this.moneyFmts(moneyTotal) : null})
+
+// this.$set(this.incomeTotal[0], 'money', moneyTotal !== null ? this.moneyFmts(moneyTotal) : null)
+
+// this.incomeTotal.splice(0,1,{...this.incomeTotal[0], money:moneyTotal !== null ? this.moneyFmts(moneyTotal) : null})
+
+// this.incomeTotal = [
+//     {...this.incomeTotal[0], money:moneyTotal !== null ? this.moneyFmts(moneyTotal) : null},
+//      ...this.incomeTotal.slice(1)
+// ]
+
+
+//检查 `value` 是否可能是原型对象。
+const isPrototype = function (value) {
+    const objectProto = Object.prototype
+    const Ctor = value && value.constructor
+    const proto = (typeof Ctor === 'function' && Ctor.prototype) || objectProto
+    return value === proto
+}
+// 是否有长度
+const isLength = function (value) {
+    const MAX_SAFE_INTEGER = 9007199254740991 // 2**53-1
+    return typeof value === 'number' && value > -1 && value % 1 == 0 && value <= MAX_SAFE_INTEGER
+}
+const isArrayLike = function (value) {
+    return value != null && typeof value !== 'function' && isLength(value.length)
+}
+const getType = function (o) {
+    return Object.prototype.toString.call(o).slice(8, -1).toLowerCase()
+}
+const isObjectLike = function (value) {
+    return typeof value === 'object' && value !== null
+}
+const isArguments = function (value) {
+    return isObjectLike(value) && getType(value) == 'arguments'
+}
+
+/**
+ * @param {Array|Object|string} value：要检查的值
+ */
+const isEmpty = function (value) {
+    if (value == null) return true
+    if(value === 0)  return true
+    if (isArrayLike(value)) {
+        try {
+            return !value.length
+        } catch (e) {}
+    }
+
+    if (['map', 'set'].includes(getType(value))) return !value.size
+    if (isPrototype(value)) return !Object.keys(value).length
+    const hasOwnProperty = Object.prototype.hasOwnProperty
+    for (const key in value) {
+        if (hasOwnProperty.call(value, key)) return false
+    }
+    return false
+}
+// 判断目标对象为object||array
+const isObj = (target) => {
+    return !!target && typeof target === 'object'
+  }
+  
+  /**
+   * 遍历对象所有key的值，将"非法值"替换为"合法值"
+   * @param {Object} obj 需要遍历的对象
+   * @param {Array} invalids 自定义“非法值”
+   * @param {Array} val 自定义“合法值”
+   */
+function allKeysToValid(target, invalids = [null, undefined, 'null', 'undefined'], opt= { isSwitch: false}){
+    if(Array.isArray(target)){
+        return target.map(item => allKeysToValid(item, invalids, opt))
+    } else {
+        if (!isObj(target)) {
+          return target
+        }
+        for (const k in target) {
+          if (isObj(target[k])) {
+            target[k] = allKeysToValid(target[k])
+          } else if (invalids.includes(target[k])) {
+            if(opt.isSwitch){
+                target[k] = opt.valid || ''
+            } else {
+                delete target[k]
+            }
+          }
+        }
+        return target
+    }
+}
+
+
+
+let a2 = [
+    { id: 1, name: '张三', age: 20 },
+    { id: 1, age: 20, name: '张三' },
+    { id: 1, name: '李四', age: 20 },
+    { id: 3, name: '小明', age: 23 },
+    { id: 3, name: '小明', age: 23 },
+    { id: 2, name: '大卫', age: 21 },
+    { id: 22, name: '大卫1', age: 22 },
+]
+
+function getRepeat(arr=[]) {
+    return arr.reduce((prve, cur, i, a) => {
+        cur = Object.keys(cur).sort().reduce((p, c) => (p[c] = cur[c], p), {})
+        const k = JSON.stringify(cur)
+        prve.countMap[k] ? prve.countMap[k]++ : (prve.countMap[k] = 1)
+        if (i === a.length - 1) {
+            Object.keys(prve.countMap).forEach(key => prve[prve.countMap[key] > 1 ? 'repeatArr' : 'notRepeatArr'].push(JSON.parse(key)))
+            delete prve.countMap
+        }
+        return prve
+    }, {
+        repeatArr: [],
+        notRepeatArr: [],
+        countMap: {}
+    })
+}
+
+// console.log('%c [ map ]-888', 'font-size:13px; background:pink; color:#bf2c9f;', getRepeat(a2))
+
+// const isRepeat = function (arr,isGetData) {
+//     let len = arr.length
+//     let repeatItem = null
+//     let repeatIndex = -1
+//     let innerBreak = false
+//     try {
+//         for (let i = 0; i < len; i++) {
+//             if(innerBreak) break
+//             for (let k = i + 1; k < len; k++) {
+//                 if (rutils.isEquals(arr[i], arr[k])) {
+//                     repeatItem = arr[i]
+//                     repeatIndex = i
+//                     innerBreak = true
+//                     break
+//                 }
+//             }
+//         }
+//         if(repeatItem){
+//             return isGetData ? { repeatIndex, repeatItem, isRepeat:true }  : true
+//         } else {
+//             return isGetData ? { repeatIndex, repeatItem, isRepeat:false }  : false
+//         }
+       
+//     } catch (e) {
+//         return len !== rutils.unique(arr).length
+//     }
+// }
+// const isRepeat = function (arr, isGetData) {
+//     let len = arr.length
+//     try {
+//         for (let i = 0; i < len; i++) {
+//             for (let k = i + 1; k < len; k++) {
+//                 if (rutils.isEquals(arr[i], arr[k])) {
+//                     return isGetData ? { repeatIndex: i, repeatItem:arr[i], is:true }  : true
+//                 }
+//             }
+//         }
+//         return isGetData ? { repeatIndex: -1, repeatItem: null, is: false } : false
+//     } catch (e) {
+//         return isGetData ? { repeatIndex: -1, repeatItem: null, is:true } : len !== rutils.unique(arr).length
+//     }
+// }
+// const {is} = isRepeat(a2)
+
+// console.log('%c [ isRepeat(a2) ]-894', 'font-size:13px; background:pink; color:#bf2c9f;', is)
+
+
+
+// 页面 []
+// 选中[1,2]
+
+// 页面[1,2]
+// 选中[3,4]
+
+// 页面[1,2]
+// 选中[1,2,3]
+
+
+/**
+ * 1. rutils.intersection([1,2],[3,4]) => []   删除原理所有属性，新增新的属性
+ * 
+ * 
+ * 
+ * 
+ * 
+ * */
+
+
+// 主要 列表
+// function primary() {
+//     return new Promise((resolve, reject) => {
+//         setTimeout(() => {
+//             this.列表 = [1,2,3,4]
+//             resolve('getData1')
+//         }, 100)
+//     })
+// }
+// // 次要 表头
+// function secondary({ get = 1, set = 2 } = {}) {
+//     return new Promise((resolve, reject) => {
+//         setTimeout(() => {
+//             this.表头 = [1,2,3,4]
+//             resolve('getData2')
+//         }, 200)
+//     })
+// }
+// function ConcurrentOptimization(primary, secondary){
+//     return new Promise((resolve, reject) => {
+//         let p = primary()
+//         let s = secondary()
+//         Promise.all([p, s]).then(res => {
+//             resolve(res)
+//         })
+//     })
+// }
+
+// ConcurrentOptimization(primary, secondary).then((res)=>{
+//     console.log('%c [ res ]-988', 'font-size:13px; background:pink; color:#bf2c9f;', res)
+// })
+
+const data11 = [
+    {
+        "itemId": "227365888498950144",
+        "itemNo": "56010111",
+        "itemName": "销售人员职工薪酬11",
+        "money": 66,
+        "remark": "",
+        "index": 1,
+        "sort": 1,
+        "guid": "f5a38a8b-f2c7-e3bf-2db1-d67eedbb0f24",
+        "itemType": 2,
+        "isActive": true,
+        "spuId": "379322936122667008",
+        "spuName": "海马免水洗酒精消毒液（喷雾型）100m（产品品名afga-marine酒精消毒液）"
+    },
+    {
+        "itemId": "227365888503144454",
+        "itemNo": "560401",
+        "itemName": "采购-运输费",
+        "money": 66,
+        "remark": "",
+        "index": 3,
+        "sort": 3,
+        "guid": "754df37b-6303-c6b5-2a19-4dcd8cb62b1e",
+        "itemType": 2,
+        "isActive": true
+    },
+    {
+        "itemId": "227365888498950144",
+        "itemNo": "56010111",
+        "itemName": "销售人员职工薪酬11",
+        "money": 999,
+        "remark": "",
+        "index": 6,
+        "sort": 6,
+        "guid": "519459ad-248a-e308-ad61-4b3ee4de14e3",
+        "itemType": 2,
+        "isActive": true,
+        "spuId": "379322936122667008",
+        "spuName": "海马免水洗酒精消毒液（喷雾型）100m（产品品名afga-marine酒精消毒液）"
+    },
+    {
+        "itemId": "227365888498950147",
+        "itemNo": "560104",
+        "itemName": "装卸费",
+        "money": 66,
+        "remark": "",
+        "index": 11,
+        "sort": 11,
+        "guid": "e64bf961-7cbe-cde8-d542-61661481f12f",
+        "itemType": 2,
+        "isActive": true,
+        "spuId": "375212783324635136",
+        "spuName": "测试组合必选2"
+    },
+    {
+        "itemId": "227365888498950144",
+        "itemNo": "56010111",
+        "itemName": "销售人员职工薪酬11",
+        "money": 66,
+        "remark": "",
+        "index": 16,
+        "sort": 16,
+        "guid": "8e93006d-a209-6ead-2742-7e3135f1d0a4",
+        "itemType": 2,
+        "isActive": true
+    }
+]
+
+// rutils.checkArrayRepeat(data11,{
+//     excludeProp:['remark','money','guid','index','sort']
+// },(err)=>{
+//     console.log('%c [ err ]-1103', 'font-size:13px; background:pink; color:#bf2c9f;', err)
+// })((res)=>{
+//     console.log('%c [ res ]-1103', 'font-size:13px; background:pink; color:#bf2c9f;', res)
+// })
+
+
+// const arr111 = [7,3,4,6,8,5,9,1,2]
+
+
+// for(let i = 0; i<arr111.length; i++){
+//     for(let j = i +1; j<arr111.length; j++){
+//         if(arr111[i] > arr111[j]){
+//             console.log('%c [  ]-1065', 'font-size:13px; background:pink; color:#bf2c9f;')
+//             let temp = arr111[i]
+//             arr111[i] = arr111[j]
+//             arr111[j] = temp
+//         }
+//     }
+// }
+// console.log('%c [ arr111 ]-1070', 'font-size:13px; background:pink; color:#bf2c9f;', arr111)
+function asyncCheck(vaildList = [], commonParamMap = {}, errCallBack){
+    return function (successCallBack){
+        const failMsg = vaildList.find(item=>item?.(commonParamMap))
+        return failMsg ?  Promise.reject(errCallBack?.(failMsg)) : Promise.resolve(successCallBack?.())
+    }
+}
+const before = asyncCheck(
+    [()=>{
+        return '123'
+    },()=>{
+        return '456'
+    },()=>{
+        return '789'
+    }],
+    {},
+    (err)=>{
+        console.log('%c [ err ]-1103', 'font-size:13px; background:pink; color:#bf2c9f;', err)
+    }
+)
+// before().then(res=>{
+//     console.log('%c [ res ]-1092', 'font-size:13px; background:pink; color:#bf2c9f;', res)
+// })
+
+
+
+// const userInfo = {
+//     token: null
+// }
+
+// const getToken = new Proxy(userInfo, {
+//   async get (target, propKey, receiver) {
+//       console.log('%c [ target ]-1114', 'font-size:13px; background:pink; color:#bf2c9f;', target)
+//       console.log('%c [ propKey ]-1114', 'font-size:13px; background:pink; color:#bf2c9f;', propKey)
+//     if(target[propKey]){
+//         return target[propKey]
+//     } else {
+//         return (...args) => request1(propKey)
+//           .then(() => {
+//             return Reflect.get(target, propKey, receiver)(...args)
+//           })
+//           .catch(e => {
+//             console.log('%c [ e ]-1117', 'font-size:13px; background:pink; color:#bf2c9f;', e)
+//           })
+//     }
+//   }
+// })
+// console.log('%c [ getToken ]-1123', 'font-size:13px; background:pink; color:#bf2c9f;', getToken.token)
+
+// const obj = {
+//     token:null
+// }
+// var obj1 = new Proxy(obj, {
+//   get: async function (target, propKey, receiver) {
+//     if(!target[propKey]){
+//         const result =await getToken()
+//         return result
+//     } else {
+//         return Reflect.get(target, propKey, receiver);
+//     }
+//   },
+//   set: function (target, propKey, value, receiver) {
+//     console.log(`setting ${propKey}!`);
+//     return Reflect.set(target, propKey, value, receiver);
+//   }
+// });
+// const token = function(){
+//     return new Promise(async (resolve, reject) => {
+//         console.log('%c [ obj1.token ]-1151', 'font-size:13px; background:pink; color:#bf2c9f;', obj1.token)
+//         if(obj1.token){
+//             console.log('%c [ token已经换成，使用的是缓存 ]-1153', 'font-size:13px; background:pink; color:#bf2c9f;', )
+//             resolve(obj1.token)
+//         } else{
+//             console.log('%c [ token不存在 ]-1156', 'font-size:13px; background:pink; color:#bf2c9f;', )
+//             const token = await getToken()
+//             obj1.token = token
+//             resolve(token)
+//         }
+//     })
+// }
+
+
+
+
+
+// 只请求一次，其他请求等待第一次请求结果
+// function repeatOnce (getResult, local_name) {
+//     const local_result = localStorage.getItem(local_name)
+//     if(local_result){
+//         console.log('%c [ 存在 ]-1166', 'font-size:13px; background:pink; color:#bf2c9f;', )
+//         return Promise.resolve(local_result)
+//     } else{
+//         return new Promise(async (resolve) => {
+//             if (!repeatOnce.count) {
+//                 repeatOnce.count = 0
+//                 repeatOnce.count++
+//                 console.log('%c [ 刚进入应用页面，缓存结果不存在，需要请求并缓存到本地 ]-1169', 'font-size:13px; background:pink; color:#bf2c9f;', )
+//                 const request_result = await getResult()
+//                 localStorage.setItem(local_name, request_result)
+//                 resolve(request_result)
+//                 repeatOnce.emitter.emit('ok', request_result)
+//             } else {
+//                 repeatOnce.count++
+//                 console.log('%c [ repeatOnce.count 第'+repeatOnce.count+'次请求等待返回结果]-64', 'font-size:13px; background:pink; color:#bf2c9f;', repeatOnce.count)
+//                 repeatOnce.emitter.on('ok',(result) => {
+//                     repeatOnce.count = 0
+//                     resolve(result)
+//                 })
+//             }
+//         })
+//     }
+// }
+
+// repeatOnce.emitter = {
+//     _events:{},
+//     on(eventName, callback){
+//         //判断是有已经有对应的事件名
+//         if (!this._events[eventName]) {
+//             this._events[eventName] = [callback];
+//         } else {
+//             this._events[eventName].push(callback);
+//         }
+//     },
+//     emit(eventName, ...args){
+//         this._events[eventName]?.forEach(event => event(...args));
+//     }
+// }
+
+function getToken(){
+    console.log('%c [ getToken 参数 ]-1204', 'font-size:13px; background:pink; color:#bf2c9f;', arguments)
+    return new Promise((resolve, reject)=>{
+        setTimeout(()=>{
+            resolve('我是请求的结果数据 - token')
+        }
+        ,1000)
+    })
+}
+const token = rutils.repeatOnce.bind(null, getToken.bind(null, 'getToken 传入的参数'), 'Access_Token')
+
+
+// 页面有3个方法，每个方法里面都调用了同个接口，类似token
+async function request1(){
+    const res= await token()
+    console.log('%c [ request1 ]-1226', 'font-size:13px; background:pink; color:#bf2c9f;', res)
+}
+async function request2(){
+    const res= await token()
+    console.log('%c [ request2 ]-1226', 'font-size:13px; background:pink; color:#bf2c9f;', res)
+}
+async function request3(){
+    const res= await token()
+    console.log('%c [ request3 ]-1226', 'font-size:13px; background:pink; color:#bf2c9f;', res)
+}
+
+// request1()
+// request2()
+// request3()
+
+
+
+
+
+const api = {
+    getUserInfo(data){
+        return rutils.asyncSameSource.getResult('getUserInfo',()=>{
+            console.log('%c [ 调用 getUserInfo 接口   参数 ]-1235', 'font-size:13px; background:pink; color:#bf2c9f;', arguments)
+            return new Promise((resolve, reject)=>{
+                setTimeout(()=>{
+                    resolve('成功啦')
+                },1000)
+            })
+        })
+        
+    }
+}
+let count = 0
+const interceptor = ()=>{
+    return new Promise((resolve, reject)=>{
+        console.log('%c [ 拦截层 ]-1252', 'font-size:13px; background:pink; color:#bf2c9f;', )
+        setTimeout(()=>{
+            if(count===0){
+                count++
+                reject('失败')
+            } else {
+                resolve('成功')
+            }
+        },2000)
+    })
+}
+function getToken(){
+    return new Promise((resolve, reject)=>{
+        console.log('%c [ 调用 getToken 接口 ]-1235', 'font-size:13px; background:pink; color:#bf2c9f;', )
+        setTimeout(()=>{
+            resolve('token')
+        },1000)
+    })
+}
+
+
+const obj = rutils.propxyObjectGenerator(api, interceptor)
+
+// obj.getUserInfo('这是参数1').then(res=>{
+//     console.log('%c [ res1 ]-1268', 'font-size:13px; background:pink; color:#bf2c9f;', res)
+// })
+// obj.getUserInfo('这是参数2').then(res=>{
+//     console.log('%c [ res 2]-1268', 'font-size:13px; background:pink; color:#bf2c9f;', res)
+// })
+
+
+
+
+
+// function getData (name, api, cache = true) {
+//     return asyncSameSource.getResult(name, ()=>api(), cache)
+// }
+
+
+// api.getUserInfo(1).then(res=>{
+//     console.log('第一个相同请求', res)
+// })
+
+// api.getUserInfo(2).then(res=>{
+//     console.log('第二个相同请求', res)
+// })
+
+// api.getUserInfo(3).then(res=>{
+//     console.log('第三个相同请求', res)
+// })
+
+// getData('getUserInfo', api.getProductInfo).then(res=>{
+//     console.log('%c [ res ]-1416', 'font-size:13px; background:pink; color:#bf2c9f;', res)
+// })
+
+// getData('getUserInfo', api.getProductInfo).then(res=>{
+//     console.log('%c [ res ]-1416', 'font-size:13px; background:pink; color:#bf2c9f;', res)
+// })
+
+// setTimeout(()=>{
+//     getData('getUserInfo', api.getProductInfo).then(res=>{
+//         console.log('%c [ res ]-1416', 'font-size:13px; background:pink; color:#bf2c9f;', res, asyncSameSource)
+//     }).catch(err=>{
+//         console.log('%c [ err ]-1416', 'font-size:13px; background:pink; color:#bf2c9f;', err, asyncSameSource)
+//     })
+// }, 2000)
+
+
+
+function getUserInfo(){
+    return rutils.asyncSameSource.getResult('getUserInfo',()=>{
+        console.log('%c [ 调用 getUserInfo 接口   参数 ]-1235', 'font-size:13px; background:pink; color:#bf2c9f;', arguments)
+        return new Promise((resolve, reject)=>{
+            setTimeout(()=>{
+                resolve('成功啦')
+            },1000)
+        })
+    })
+}
+getUserInfo().then(res=>{
+    console.log('%c [ res1 ]-1333', 'font-size:13px; background:pink; color:#bf2c9f;', res)
+})
+getUserInfo().then(res=>{
+    console.log('%c [ res2 ]-1333', 'font-size:13px; background:pink; color:#bf2c9f;', res)
+})
+getUserInfo().then(res=>{
+    console.log('%c [ res3 ]-1333', 'font-size:13px; background:pink; color:#bf2c9f;', res)
+})
+</script>
+</html>

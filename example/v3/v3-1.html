@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>v3</title>
+</head>
+<body>
+    <div id="app">
+        {{ message }}
+        <span v-bind="objectOfAttrs">desc</span>
+    </div>
+</body>
+<script type="importmap">
+    {
+      "imports": {
+        "vue": "https://cdn.bootcdn.net/ajax/libs/vue/3.3.4/vue.esm-browser.js"
+      }
+    }
+  </script>
+  <script src="../../build/lib/index.js"></script>
+  <script src="https://cdn.bootcdn.net/ajax/libs/vConsole/3.15.1/vconsole.min.js"></script>
+  <script type="module">
+    import { createApp, ref } from 'vue'
+
+    const leftConfig = {}
+    const rightConfig = {}
+
+    const app =
+
+    createApp({
+        setup() {
+            const count = ref(0)
+            const objectOfAttrs = ref({
+                id: 'container',
+                class: 'wrapper'
+            })
+            function handleClick() {
+                rutils.downloadByImgLink('https://img20.360buyimg.com/img/s130x130_jfs/t1/18313/6/11424/147396/5c8f6a4cE83a6d7e2/688874585858d5f4.jpg!cc_130x130.avif','商品1')
+            }
+            return { count, objectOfAttrs, handleClick }
+        },
+        template: `<div v-bind="objectOfAttrs" @click="handleClick">count is {{ count }}</div>`
+    }).mount('#app')
+    new VConsole()
+
+    
+  </script>
+</html>

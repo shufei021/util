@@ -1,0 +1,35 @@
+{
+    "name": "@handday/utils",
+    "version": "0.0.1",
+    "description": "Front-end tool library",
+    "private": false,
+    "main": "./build/lib/index.js",
+    "dependencies": {
+        "execa": "^5.1.1",
+        "generate-source-map": "0.0.5",
+        "rollup-plugin-require-context": "^1.0.1"
+    },
+    "devDependencies": {
+        "rollup-plugin-define": "^1.0.1",
+        "@babel/core": "^7.19.6",
+        "@babel/preset-env": "^7.19.4",
+        "execa": "^5.1.1",
+        "rollup-plugin-babel": "^4.4.0",
+        "rollup-plugin-commonjs": "^10.1.0",
+        "rollup-plugin-node-resolve": "^5.2.0",
+        "rollup-plugin-uglify": "^6.0.4"
+    },
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "lib:build": "npm version patch && rollup -c",
+        "lib:publish": "node ./release.js"
+    },
+    "keywords": [],
+    "author": "shufei",
+    "license": "ISC",
+    "homepage": "https://frontwiki.facehand.cn/librarynew/",
+    "repository": {
+        "type": "git",
+        "url": "http://gitlab.facehand.cn/hdsaas/front-end/zztx_utils.git"
+    }
+}

@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vue2 数字输入框指令</title>
+</head>
+<body>
+    <div id="app">
+        <div class="item">
+            <div class="desc">
+                默认状态
+                <ul>
+                    <li>输入的小数位数digit：2</li>
+                    <li>输入数字最大值max：无限制</li>
+                    <li>输入数字最小值min：无限制</li>
+                    <li>是否允许输入负号negative：不允许</li>
+                    <li>超出最值 是否允许采用替换成对应最值isReplace：不允许</li>
+                </ul>
+            </div>
+            <div class="input-wrap"><input type="text" v-number></div>
+        </div>
+        <div class="item">
+            <div class="desc">
+                自定义状态1
+                <ul>
+                    <li>输入的小数位数digit：0</li>
+                    <li>输入数字最大值max：999</li>
+                    <li>输入数字最小值min：-999</li>
+                    <li>是否允许输入负号negative：允许</li>
+                    <li>超出最值 是否允许采用替换成对应最值isReplace：允许</li>
+                </ul>
+            </div>
+            <div class="input-wrap"><input type="text" v-number="{digit:0,min:-999,max:999,negative:true,isReplace:true}"></div>
+        </div>
+        <div class="item">
+            <div class="desc">
+                自定义状态2
+                <ul>
+                    <li>输入的小数位数digit：0</li>
+                    <li>输入数字最大值max：999</li>
+                    <li>输入数字最小值min：0</li>
+                    <li>是否允许输入负号negative：不允许</li>
+                    <li>超出最值 是否允许采用替换成对应最值isReplace：不允许</li>
+                </ul>
+            </div>
+            <div class="input-wrap"><input type="text" v-number="{digit:0,min:-999,max:999,negative:false,isReplace:false}"></div>
+        </div>
+        <div>内容：<span id="selected">配得到结果 以数字开头，只有一个小数点，而且小数点后面只能有0到2位</span></div>
+    </div>
+</body>
+<script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+<script>
+    /**
+     * 
+        数字输入框，需求满足：
+
+        设置输入的小数位数
+        设置是否支持输入fushu负号
+        支持最值（最大值、最小值）
+        设置边界超出处理 （1、超出是否替换成最值 2、超出最值无法进一步输入）
+
+        配置属性：
+
+        max - 输入数字最大值
+        min - 输入数字最小值
+        digit - 设置小数位数
+        negative 是否支持输入符号
+        isReplace - 超出最值 是采用替换成对应最值
+     * 
+     <div v-if="isInited && total===0 && loading === false"> empty </div>
+     * 
+     */
+    new Vue({
+        el:'#app',
+        data:{
+            isInited: false, // 是否初始化完毕了
+            loading: false, // 是否正在加载中
+        },
+        directives:{
+            number: {
+                bind (el, binding) {
+                     // input 输入框 元素 兼容
+                    if (el.tagName !== 'INPUT') el = el.querySelector('input')
+                    el.old = '' // 记录旧值
+                    el.handler = function () {
+                        if(el.lock)return
+                        const { max, digit, min, negative, isReplace } = binding.value || {}
+                         // 小数位数正则
+                        const digitReg = new RegExp(`^\\d*(\\.?\\d{0,${digit === undefined ? 2 : digit}})`, 'g')
+                        // 最新值是否是负数
+                        const isNegative  = el.value.includes('-')
+                        // 最新的输入框内的值
+                        const val = el.value
+                         // 其它非法值进行处理
+                        let newValue = el.value.replace(/[^\d.]/, '')
+                            .replace(/,/g, '')
+                            .replace(/^0+(\d)/, '$1') // 第一位0开头，0后面为数字，则过滤掉，取后面的数字
+                            .replace(/^\./, '0.') // 如果输入的第一位为小数点，则替换成 0. 实现自动补全
+                            .match(digitReg)[0] || '' // 最终匹配得到结果 以数字开头，只有一个小数点，而且小数点后面只能有0到2位小数
+                        // 负数 并且 允许输入符号
+                        if (isNegative && negative) {
+                            if (val.match(/-/g)?.length === 2) newValue = val.split('-').join('')
+                            newValue = '-' + newValue
+                        }
+
+                        if (newValue.slice(-1) === '.' && digit === 0) {
+                            newValue = Number(newValue)
+                        }
+                        // 输入值超出最值 ， isReplace 为 true 就 替换，否则就还原上次输入的值
+                        if (max !== undefined && newValue > max) {
+                            newValue = isReplace ? max : String(newValue).slice(0, -1)
+                        } else if (min !== undefined && newValue < min) {
+                            newValue = isReplace ? min : String(newValue).slice(0, -1)
+                        } else { // 输入值未超出最值
+                            el.old = newValue
+                        }
+                        // 判断是否需要更新，避免进入死循环\
+                        if (newValue !== el.value) {
+                            el.value = newValue
+                            el.dispatchEvent(new Event('input')) // 通知v-model更新
+                        }
+                    }
+                    el.blurHander = function (e) {
+                        const { digit } = binding.value || {}
+                        const digitReg = new RegExp(`^\\d*(\\.?\\d{0,${digit === undefined ? 2 : digit}})`, 'g')
+                        if (el.value === '-') {
+                            el.value = ''
+                            el.dispatchEvent(new Event('input')) // 通知v-model更新
+                            return
+                        }
+                        let newValue = el.value.replace(/[^\d.]/, '')
+                            .replace(/^0+(\d)/, '$1') // 第一位0开头，0后面为数字，则过滤掉，取后面的数字
+                            .replace(/^\./, '0.') // 如果输入的第一位为小数点，则替换成 0. 实现自动补全
+                            .match(digitReg)[0] || '' // 最终匹配得到结果 以数字开头，只有一个小数点，而且小数点后面只能有0到2位小数
+                        if (newValue.slice(-1) === '.' && digit !== 0 && digit !== undefined) {
+                            newValue = Number(newValue)
+                            el.value = newValue
+                            el.dispatchEvent(new Event('input')) // 通知v-model更新
+                        }
+                    }
+                    el.compositionstart = function(e){
+                        el.lock = true
+                        e.preventDefault();
+                        e.stopPropagation();
+                    }
+                    el.compositionend = function(e){
+                        el.lock = false
+                        el.value = parseFloat(el.value)
+                        el.dispatchEvent(new Event('input'))
+                        e.preventDefault();
+                        e.stopPropagation();
+                    }
+                    el.addEventListener('input', el.handler)
+                    el.addEventListener('blur', el.blurHander)
+                    el.addEventListener('compositionstart', el.compositionstart)
+                    el.addEventListener('compositionend', el.compositionend)
+                },
+                unbind (el) {
+                    el.removeEventListener('input', el.handler)
+                    el.removeEventListener('blur', el.blurHander)
+                    // 这两个事件是文本合成事件，如果你输入中文的时候，一开始就会触发compositionstart事件，输入结束选择中文后，触发compositionend事件。
+                    el.removeEventListener('compositionstart', el.compositionstart)
+                    el.removeEventListener('compositionend', el.compositionend)
+                }
+            }
+        },
+        mounted(){
+            this.addStyleCss('STYLEID',['body{color:#fff;background:#000;}'])
+            const el = this.selectRangeByElement('#selected',(data)=>{
+                if(data) alert('复制成功')
+            })
+        },
+        methods: {
+            addStyleCss(styleId,arr){
+                const targetCss = [...document.styleSheets].find(i=>i.ownerNode.id === styleId)
+                if(targetCss){
+                    for (let i=0;i<arr.length;i++)targetCss.insertRule(arr[i])
+                    return targetCss
+                }else{
+                    const style = document.createElement('style')
+                    style.id = 'add_style_css_'+Date.now()
+                    document.body.appendChild(style)
+                    style.onload = ()=>{
+                        const targetCss = [...document.styleSheets].find(i=>i.ownerNode.id === style.id)
+                        for (let i=0;i<arr.length;i++)targetCss.insertRule(arr[i])
+                        style.onload = null
+                    }
+                    return style
+                }
+            },
+            copyText(text) {
+                const input = document.createElement('input')
+                input.value = text // 修改文本框的内容
+                document.body.appendChild(input)
+                input.select() // 选中文本
+                document.execCommand('copy') // 执行浏览器复制命令
+                document.body.removeChild(input)
+            },
+            selectRangeByElement(el, callback) {
+                el = typeof el === 'string' ?  document.querySelector(el) : el;
+                el.onmouseup =  (e)=> {
+                    const target = e.srcElement ? e.srcElement : e.target
+                    const sText =
+                        document.selection == undefined
+                            ? document.getSelection().toString()
+                            : document.selection.createRange().text
+                    if(sText.length){
+                        this.copyText(sText)
+                        callback?.(sText, e)
+                    }
+                }
+                el.off = function () {
+                    el.onmouseup =  el.off = null
+                }
+                return el
+            },
+            
+            onClickTab(val){
+                this.page = 1
+                this.finished = false
+                this.total = 0
+                this.indexValue = val
+                this.tableList = []
+                this.isInited = false
+                this.onLoad()
+            },
+            // 
+            onLoad() {
+                if(!this.loading){
+                    setTimeout(async () => {
+                        this.getList()
+                    }, 1000);
+                }
+            },
+            // 获取列表数据
+            async getList() {
+                if(this.loading) return
+                this.loading = true
+                this.API.allApi.getVotePlayerRankByVoteId({
+                    appInfoId: this.appInfoId,
+                    pageNum: this.page,
+                    pageSize: 10,
+                    voteId: this.rankObj.voteInfoId,
+                    groupId: this.rankObj.id,
+                }).then(res=>{
+                    // 如果请求成功, 并且返回数据
+                    if (res.success) {
+                        // 如果返回数据卫空数组 并且页面为 1
+                        if (res.data.length === 0 && this.page === 1) {
+                            this.playerList = [];
+                            this.total = 0;
+                        } else if (res.data[0]?.list) {
+                            const { list, total } = res.data[0];
+                            this.total = total;
+
+                            if( !this.isInited && this.page === 1) {
+                                this.playerList = list;
+                            } else {
+                                this.playerList.push(...list);
+                            }
+
+                            if (res.data[0].list.length < 10) {
+                                console.log('111', res.data[0].list);
+                                console.log('this.page', this.page);
+                            }
+                        }
+                    }
+                }).finally(()=>{
+                    this.isInited = false
+                    this.loading = false;
+                })
+            },
+        } 
+    })
+const isPrototype = function (value) {
+    const objectProto = Object.prototype
+    const Ctor = value && value.constructor
+    const proto = (typeof Ctor === 'function' && Ctor.prototype) || objectProto
+    return value === proto
+}
+// 是否有长度
+const isLength = function (value) {
+    const MAX_SAFE_INTEGER = 9007199254740991 // 2**53-1
+    return typeof value === 'number' && value > -1 && value % 1 == 0 && value <= MAX_SAFE_INTEGER
+}
+const isArrayLike = function (value) {
+    return value != null && typeof value !== 'function' && isLength(value.length)
+}
+const getType = function (o) {
+    return Object.prototype.toString.call(o).slice(8, -1).toLowerCase()
+}
+const isObjectLike = function (value) {
+    return typeof value === 'object' && value !== null
+}
+
+
+/**
+ * @param {Array|Object|string} value：要检查的值
+ */
+const isEmpty = function (value) {
+    if (value == null) return true
+    if (isArrayLike(value)) {
+        try {
+            return !value.length
+        } catch (e) {}
+    }
+
+    if (['map', 'set'].includes(getType(value))) return !value.size
+    if (isPrototype(value)) return !Object.keys(value).length
+    const hasOwnProperty = Object.prototype.hasOwnProperty
+    for (const key in value) {
+        if (hasOwnProperty.call(value, key)) return false
+    }
+    return true
+}
+function getPrototypeOf (){
+    const list = [0, false, '',null, undefined, new Map(),new Set(),{},[],arguments]
+    list.forEach(item=>{
+        console.log('%c [  ]-322', 'font-size:13px; background:pink; color:#bf2c9f;',item, isEmpty(item))
+    })
+}
+getPrototypeOf()
+</script>
+</html>

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>画图</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+  <canvas id="myCanvas" width="500" height="500"></canvas>
+  <button id="btn">按钮</button>
+  <a id="downloadLink" style="display: none;"></a>
+  <script src="../../build/lib/index.js"></script>
+  <script src="https://cdn.bootcdn.net/ajax/libs/vConsole/3.15.1/vconsole.min.js"></script>
+  <script>
+    document.querySelector('#btn').addEventListener('click', function() {
+        console.log('%c [ rutils.downloadByImgLink ]-15', 'font-size:13px; background:pink; color:#bf2c9f;')
+        // 调用函数下载图片
+        downloadImage('https://b.yzcdn.cn/vant/icon-demo-1126.png','image.jpg');
+    })
+
+    function downloadImage(url, filename) {
+        fetch(url)
+            .then(response => response.blob())
+            .then(blob => {
+            const blobUrl = window.URL.createObjectURL(blob);
+
+            const a = document.createElement('a');
+            a.href = blobUrl;
+            a.download = filename;
+
+            document.body.appendChild(a);
+            a.click();
+
+            window.URL.revokeObjectURL(blobUrl);
+            document.body.removeChild(a);
+            });
+    }
+    // 获取 canvas 元素
+    const canvas = document.getElementById('myCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // 创建两个图片对象
+    const image1 = new Image();
+    const image2 = new Image();
+
+    // 加载图片
+    image1.src = 'https://img0.baidu.com/it/u=2676574563,3594098553&fm=253&fmt=auto&app=138&f=JPEG?w=667&h=500';
+    image2.src = 'https://img1.baidu.com/it/u=206225810,1732683717&fm=253&fmt=auto&app=138&f=JPEG?w=500&h=500';
+
+    // 图片加载完成后绘制到 canvas
+    image1.onload = function() {
+      // 绘制第一张图片
+      ctx.drawImage(image1, 0, 0, 50, 50);
+      
+      image2.onload = function() {
+        // 绘制第二张图片
+        ctx.drawImage(image2, 50, 50, 100, 100);
+      };
+    };
+    new VConsole()
+  </script>
+</body>
+</html>
