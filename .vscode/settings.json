@@ -1,5 +1,4 @@
 {
-    "liveServer.settings.port": 5503,
     // 每次保存的时候将代码按格式进行修复
     "editor.codeActionsOnSave": {
       "source.fixAll": "explicit",
@@ -22,14 +21,13 @@
       "editor.defaultFormatter": "esbenp.prettier-vscode"
     },
     "fileheader.customMade": {
-      "description": "", // 函数注释生成之后，光标移动到这里
+      "Description": "", // 函数注释生成之后，光标移动到这里
       "Author": "git config user.name", // 创建文件的作者
-      "Date": "Do not edit",
-      "LastEditors": "",
-      "LastEditTime": ""
+      "Date": "Do not edit"
     },
     // 这里是实现函数名后边有空格的效果
     "javascript.format.insertSpaceBeforeFunctionParenthesis": true,
     "editor.formatOnType": true //开启自动格式化
   }
+  
   

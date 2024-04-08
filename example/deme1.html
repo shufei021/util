@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Getting Started with ml5.js</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  </head>
+
+  <body>
+<script>
+// 四舍五入到指定位数
+const round = function (n, dight) {
+    n = Number(n).toString()
+    // 如果是科学计算法
+    if(n.includes('e')){
+        let [coefficient, exponent] = n.split('e'); 
+        // 如果系数是小数进行抹平
+        if(coefficient.includes('.')){
+            const arr = coefficient.split('.')
+            const dotLen = arr[1].length
+            exponent = exponent - dotLen
+            coefficient = coefficient.replace('.', '')
+        }
+        if(exponent>0){ // 整数
+            const end = '0'.repeat(exponent)
+            const rt = coefficient + end
+            if(dight) return rt + '.' + '0'.repeat(dight)
+            if(exponent > coefficient.length) return rt
+            return (rt + '0'.repeat(dight)).slice(0,-1*dight)
+        } else if(exponent<0){
+            n = '0.' + coefficient.padStart(-exponent,0)
+            if(dight===undefined) return n
+            const r = (Math.round(n * 10**exponent / (10**(exponent - dight))) / 10**dight).toString()
+            if(r.includes('e')){
+                let [coefficient, exponent] = r.split('e'); 
+                if(coefficient.includes('.')){
+                    const arr = coefficient.split('.')
+                    const dotLen = arr[1].length
+                    exponent = exponent - dotLen
+                    coefficient = coefficient.replace('.', '')
+                }
+                return '0.' + coefficient.padStart(-exponent,0)
+            }else {
+                return r
+            }
+        }
+    } else { // 非科学计算法
+
+        if(n.includes('.')){ // 小数
+            const arr = n.split('.')
+            let dotLen = arr[1].length
+            if(dight > dotLen) return n.padEnd(n.length + dight - dotLen, '0')
+            if(dight === undefined) return n
+            return  Math.round(n * 10**dotLen / (10**(dotLen - dight))) / 10**dight
+        }else{// 整数
+            return Number(n).toFixed(dight)
+        }
+    }
+}
+
+
+
+const isValidNum = function (val, isExp) {
+    // 构造一个正则表达式来匹配数字
+    // 如果 isExp 为 true，则包括对指数表示法的支持
+    // 否则，它只匹配标准的十进制表示法
+    var regex = isExp ? /^[+-]?\d+(\.\d+)?([eE][+-]?\d+)?$/ : /^[+-]?\d+(\.\d+)?$/;
+    
+    // 检测 val 的字符串表示是否与构造的正则表达式匹配
+    return regex.test(String(val));
+}
+
+/**
+ * 数字格式化
+ * @param { String | Number } val : 有效数数字
+ * @param { Boolean } isThousands : 整数部分是否进行千分位,默认值 false
+ * @param { Number } digit : 小数部分四舍五入保留到的位数
+ * @param { Boolean } isCalc : 计算结果是否 数字化
+ */
+const fmtNum = function (val, isThousands = false, len,isCalc) {
+
+    // 无效值处理，，不符合传入规则的值一律返回空字符串
+    if (val === undefined || val == null) return ''
+
+    // 无论数字还是字符串数字，最终都转换成字符串数字
+    let str = round(val, len) + ''
+
+    // 进行检测str是否是有效的数字,不是有效直接返回空字符串
+    if (!isValidNum(str)) return ''
+
+    // 如果结果需要数字化，直接返回数字化
+    if(isCalc) return Number(str)
+
+    // 如果不需要千分位处理
+    if(!isThousands) return str
+
+    // 如果需要千分位
+    const [ int, dot='' ] = str.split('.')
+
+    // 整数部分千分位处理
+    return  int.replace(/(?=(?!\b)(\d{3})+$)/g, ',') + (dot ? '.'+ dot : dot)
+}
+const calc = function (type, a, b, digit) {
+    const aLen = a.toString().split('.')[1]?.length || 0
+    const bLen = b.toString().split('.')[1]?.length || 0
+    let maxLen = Math.pow(10, Math.max(aLen, bLen))
+    if (![0,1,2,3].includes(type)) throw new Error('type参数错误')
+    const result = type===0 ? 
+                    (a * maxLen + b * maxLen) / maxLen:  type===1 ? 
+                    (a * maxLen - b * maxLen) / maxLen : type===2 ?  
+                    (a * maxLen * b * maxLen) / (maxLen * maxLen) : 
+                    (a * maxLen) / (b * maxLen)
+    return round(result, digit)
+}
+const devide = function (a, b, digit) {
+    return Array.isArray(a) ? (a.length >= 2 ? a.reduce((p, c) => devide(p, c, b)) : '') : !a || !b ? 0 : calc(3, a, b, digit)
+}
+const multiply = function (a, b, digit) {
+    return Array.isArray(a) ? (a.length ? a.reduce((p, c) => multiply(p, c, b), 1) : 0) : calc(2, a, b, digit)
+}
+console.log('%c [ fmtNum(123e+25,false,2) ]-116', 'font-size:13px; background:pink; color:#bf2c9f;', fmtNum(123e+10,false,2))
+console.log('%c [ fmtNum(123e+25,false,2) ]-116', 'font-size:13px; background:pink; color:#bf2c9f;', fmtNum(123e+10,false,2,true))
+// console.log(round(11))
+// console.log(round(11,2))
+// console.log(round(1e20))
+// console.log(round(1e-20))
+// console.log(round(1.222e50))
+// console.log(round(1.222e-20))
+// console.log(round(123.456))
+// console.log(round(123.456, 0))
+// console.log(round(123.456, 1))
+// console.log(round(123.456, 2))
+// console.log(round(123.456, 3))
+// console.log(round(123.456, 4))
+// console.log(round(123.456, 5))
+// console.log(round(1e-8))
+// console.log(round(1.23e5))
+// console.log(round(1.23e5,1))
+// console.log(round('1.23e5',2))
+// console.log(round(1.234567891234567e-16,20))
+// console.log(round(123e+25,20))
+
+// intersection 交集  [1,3] [2,3] = >[3] 返回一个包含所有传入数组交集元素的新数组
+// difference 差集 [1,3] [2,3] = >[1,2] 大家都没有的集合
+// union 并集 [1,3] [2,3] =》 [1,2,3]
+// uniqBy 返回新的去重后的数组
+
+</script>
+</body>
+</html>

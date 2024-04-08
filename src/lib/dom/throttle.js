@@ -1,11 +1,4 @@
-/*
- * @Author: 舒飞 1017981699@qq.com
- * @Date: 2021-09-28 10:44:21
- * @LastEditors: 舒飞 1017981699@qq.com
- * @LastEditTime: 2023-03-17 13:51:22
- * @FilePath: \zztx_utils\src\lib\dom\throttle.js
- * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
- */
+
 /**
  * @description:节流
  * @param { Function } func : 节流的事件响应函数

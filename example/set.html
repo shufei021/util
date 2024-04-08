@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>万能热区</title>
+</head>
+<style>
+    *{
+        margin: 0;
+        padding: 0;
+    }
+    .scope{
+        width: 533px;
+        height: 300px;
+        background-color: #ddd;
+        margin: 50px auto;
+        position: relative;
+        background-image: url(https://img2.baidu.com/it/u=3666548066,2508071679&fm=26&fmt=auto);
+        background-position: center;
+        background-size: 100%;
+        background-repeat: no-repeat;
+    }
+    .change{
+        position: absolute;
+        width: 10px;
+        height: 10px;
+        background-color: transparent;
+        bottom: 0;
+        right: 0;
+        cursor: nw-resize;
+        z-index: 1;
+    }
+    .square{
+        background-color: rgba(66, 114, 255,.3);
+    }
+    .right{
+        position: absolute;
+        width: 10px;
+        background-color: transparent;
+        top: 0;
+        bottom: 0;
+        right: 0;
+        cursor: w-resize;
+    }
+    .bottom{
+        position: absolute;
+        height: 10px;
+        background-color: transparent;
+        bottom: 0;
+        right: 0;
+        left: 0;
+        cursor: n-resize;
+    }
+</style>
+<body>
+    <div class="scope"></div>
+</body>
+<script src="https://cdn.bootcdn.net/ajax/libs/big.js/6.2.1/big.js"></script>
+<script>
+    // 获取容器
+    const scope = document.querySelector('.scope')
+    // 计算固定值
+    const {offsetTop:TOP,offsetLeft:LEFT,offsetWidth:WIDTH,offsetHeight:HEIGHT} = scope
+    // 创建的 正方形 最小高度
+    const squareMinHeigh = 200
+     // 创建的 正方形 最小宽度
+    const squareMinWidth = 200
+    // 获取 scope 区域里没大 square 的最大层级 z-index
+    function getMaxZindx(){
+        return [...scope.querySelectorAll('.square')].reduce((p,c)=>{
+            if((isNaN(getComputedStyle(c)['z-index'])?1:getComputedStyle(c)['z-index']*1) >p){
+                p=isNaN(getComputedStyle(c)['z-index'])?1:getComputedStyle(c)['z-index']*1
+            }
+            return p
+        },0)
+    }
+    // 鼠标点击 在 容器内点击生成 一个 初始化宽高 50px 的 正方形
+    scope.addEventListener('click',function({offsetX,offsetY,clientX,clientY,target:{className}}){
+        if(HEIGHT - offsetY <= squareMinHeigh || WIDTH - offsetX <= squareMinWidth){
+            return console.log('越界了')
+        }
+        // 动态创建  square 元素 并打上标记属性
+        if(!this.dataset.pending || this.dataset.pending==='2'){
+            // 根据点击点的 offsetX,offsetY 和 宽高计算
+            if(className!=='square' && className!=='change') squareGenerator(offsetX,offsetY,clientX,clientY)
+        }
+    })
+    //  正方形生成器
+    function squareGenerator(x,y,_x,_y){
+        const dom = document.createElement('div')
+        dom.className = 'square'
+        dom.style.cssText = `
+        width:${squareMinWidth}px;
+        height:${squareMinHeigh}px;
+        position:absolute;
+        left:${x}px;
+        top:${y}px;
+        box-sizing:border-box;
+        border:1px solid #4272ff;
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;`
+        dom.innerHTML = `
+            <div class="right"></div> 
+            <div class="bottom"></div> 
+            <div class="change"></div>
+            ${document.querySelectorAll('.square').length === 1 ?'B':'A'}
+        `
+         // 标记宽高，最后提交时候遍历获取 结合 x、y传给后端
+        dom.dataset.width = 50
+        dom.dataset.height = 50
+        // 相对图中的 （x，y）坐标点
+        dom.dataset.x = x
+        dom.dataset.y = y
+        // 提供给 square 里右下角按钮 改变 square 宽高使用，具体使用是 计算 square 的改变后的宽高
+        dom.dataset.client_x = _x
+        dom.dataset.client_y = _y
+        // 送入 scope 区域
+        scope.appendChild(dom)
+    }
+    
+    // 由于子节点是动态生成的，因此我们采用事件代理
+    scope.addEventListener('mousedown',function(e){
+
+        const { clientX, clientY, target } = e
+        const { offsetWidth, offsetHeight, offsetLeft, offsetTop, className, parentNode } = target
+        const { dataset: { client_x, client_y, x ,y } } = parentNode
+        // 动态重置 disX、disY
+        const disX = clientX - offsetLeft
+        const disY = clientY - offsetTop
+        
+        if(className === 'square'){ // 整体移动
+          
+            // 设置最后点击项的 suoyin + 1
+            target.style.zIndex = getMaxZindx()+1
+
+            document.onmousemove = function(ev){
+                const set = target.dataset
+                const _offsetLeft = target.offsetLeft
+                const _offsetTop = target.offsetTop
+                // 计算 x 轴方向的 left 值
+                const _left = ev.clientX - disX
+                // 计算 x 轴方向的 left 的 最大值 
+                const left_max = WIDTH - offsetWidth
+                // 计算 x 轴方向的 left 最终值 （两极点之间）
+                const left = _left <= 0 ? 0 : _left >= left_max ? left_max : _left
+                // 计算 y 轴方向的 top 值
+                const _top = ev.clientY - disY
+                 // 计算 y 轴方向的 top 的 最大值
+                const top_max = HEIGHT - offsetHeight
+                // 计算 y 轴方向的 top 最终值 （两极点之间）
+                const top = _top <= 0 ? 0 : _top >= top_max ? top_max : _top 
+                // 更新 left、top
+                target.style.left = left + 'px'
+                target.style.top = top + 'px'
+                // 更新标记属性 x、y坐标值
+                set.x = _offsetLeft
+                set.y = _offsetTop
+                // 更新 改变宽高需要的 参照 x、y坐标
+                set.client_x = LEFT +_offsetLeft
+                set.client_y = TOP + _offsetTop
+                // 更新标记属性 pending
+                scope.dataset.pending = 1
+            }
+           
+        }else if(className === 'change'){//对点击的 正方形进行 放大和缩小
+
+            // 计算 两个坐标 （client_x，client_y）、（ev.clientX，ev.clientY）
+            document.onmousemove = function(ev){
+                // 获取 square 元素
+                const parent =  target.parentNode
+                // 计算 宽度值
+                const _x = ev.clientX - client_x
+                // 获取 x 轴的临界值
+                const _w = scope.offsetWidth - parent.offsetLeft
+                // 计算最终的 宽度值
+                const x = _x <=  squareMinWidth ? squareMinWidth : _x >= _w ? _w : _x
+                // 计算 高度值
+                const _y = ev.clientY - client_y
+                // 获取 y 轴的临界值
+                const _h = scope.offsetHeight - parent.offsetTop
+                // 计算最终的 高度值
+                const y = _y <= squareMinHeigh ? squareMinHeigh : _y >= _h ? _h : _y
+                // 更新 width、 height
+                parent.style.width = x + 'px'
+                parent.style.height = y + 'px'
+                // 更新标记属性 width、height
+                parent.dataset.width =  x
+                parent.dataset.height = y
+                // 更新标记属性 pending
+                scope.dataset.pending = 1
+                return false
+            }
+        }else if(className === 'bottom'){
+             // 计算 x 轴
+             document.onmousemove = function(ev){
+                // 获取 square 元素
+                const parent =  target.parentNode
+                // 计算 高度值
+                const _y = ev.clientY - client_y
+                // 获取 y 轴的临界值
+                const _h = scope.offsetHeight - parent.offsetTop
+                // 计算最终的 高度值
+                const y = _y <= squareMinHeigh ? squareMinHeigh : _y >= _h ? _h : _y
+                // 更新 width、 height
+                parent.style.height = y + 'px'
+                // 更新标记属性 width、height
+                parent.dataset.height = y
+                // 更新标记属性 pending
+                scope.dataset.pending = 1
+                return false
+            }
+
+        }else if(className === 'right'){
+              // 计算 y 轴
+            document.onmousemove = function(ev){
+                // 获取 square 元素
+                const parent =  target.parentNode
+                // 计算 宽度值
+                const _x = ev.clientX - client_x
+                // 获取 x 轴的临界值
+                const _w = scope.offsetWidth - parent.offsetLeft
+                // 计算最终的 宽度值
+                const x = _x <=  squareMinWidth ? squareMinWidth : _x >= _w ? _w : _x
+                // 更新 width、 height
+                parent.style.width = x + 'px'
+                // 更新标记属性 width、height
+                parent.dataset.width =  x
+                // 更新标记属性 pending
+                scope.dataset.pending = 1
+                return false
+            }
+        }
+        document.onmouseup = function(){
+            document.onmousemove = null
+            document.onmouseup = null
+            setTimeout(()=>{scope.dataset.pending = 2},0)
+        }
+     
+        return false
+    })
+const isEquals = function(a, b, checked = new Set()) {
+    // 提前返回不同类型的值
+    if (typeof a !== typeof b) return false;
+
+    // 处理循环引用
+    if (typeof a === 'object' && typeof b === 'object') {
+        if (checked.has(a) && checked.has(b)) return true;
+        checked.add(a);
+        checked.add(b);
+    }
+
+    // 基本类型的值直接比较
+    if (a === b || (Number.isNaN(a) && Number.isNaN(b))) return true;
+
+    // 检查引用类型的值
+    if (typeof a === 'object') {
+        // 如果是日期对象，比较时间戳
+        if (a instanceof Date && b instanceof Date) return a.getTime() === b.getTime();
+        // 如果是正则表达式，比较字符串形式
+        if (a instanceof RegExp && b instanceof RegExp) return a.toString() === b.toString();
+        // 如果是 Map，转换为普通对象进行比较
+        if (a instanceof Map && b instanceof Map) {
+            const objA = Object.fromEntries(a.entries());
+            const objB = Object.fromEntries(b.entries());
+            return isEquals(objA, objB, checked);
+        }
+        // 如果是数组或对象，递归比较属性
+        if (Array.isArray(a) && Array.isArray(b) || Object.prototype.toString.call(a) === '[object Object]' && Object.prototype.toString.call(b) === '[object Object]') {
+            const keysA = Object.keys(a).sort(); // 对属性排序
+            const keysB = Object.keys(b).sort(); // 对属性排序
+            // 检查属性数量是否相同
+            if (keysA.length !== keysB.length) return false;
+            // 检查每个属性是否相等
+            return keysA.every((key, index) => key === keysB[index] && isEquals(a[key], b[key], checked));
+        }
+    }
+
+    // 其他情况直接返回 false
+    return false;
+}
+
+/**
+ * @description 计算两个数组的差集
+ * @param {Array} arr1 - 第一个数组
+ * @param {Array} arr2 - 第二个数组
+ * @param {string} key - 对象属性的键名（可选）
+ * @returns {Array} 差集数组
+ * @throws {Error} 参数必须为数组类型
+ */
+ const difference = function(arr1, arr2, key) {
+    if (!(Array.isArray(arr1) && Array.isArray(arr2))) {
+        throw new Error('传入的参数都必须为数组类型');
+    }
+
+    if (key) {
+        return arr1.filter(item1 => !arr2.some(item2 => item1[key] === item2[key]));
+    } else {
+        return arr1.filter(item1 => !arr2.includes(item1));
+    }
+}
+const intersection = function(arr1, arr2, key) {
+    if (!(Array.isArray(arr1) && Array.isArray(arr2))) {
+        throw new Error('传入的参数都必须为数组类型');
+    }
+    if(key){
+        return arr1.filter(item1 => arr2.some(item2 => item1[key] === item2[key]));
+    } else {
+        return arr1.filter(item => arr2.includes(item));
+    }
+}
+
+const union = function(arr1, arr2, key) {
+    if (!(Array.isArray(arr1) && Array.isArray(arr2))) {
+        throw new Error('传入的参数都必须为数组类型');
+    }
+    if(key){
+        return [...arr1, ...arr2].reduce((p,c,i,a)=>{
+            p.set(c[key],c)
+            return i === a.length-1? [...p.values()] : p
+        }, new Map())
+    } else {
+        return [...new Set([...arr1, ...arr2])];
+    }
+}
+
+const unique = function (a, k) {
+    if (!Array.isArray(a)) {
+        throw new Error('传入的第一个参数必须为数组类型');
+    }
+    if (k !== undefined && typeof k !== 'string') {  
+        throw new Error('传入的第二个参数（如果提供）必须为字符串类型');  
+    }
+    if (!k) {  
+        // 如果没有提供k参数，直接根据元素的值去重  
+        return [...new Set(a)];  
+    } 
+    // 基于对象属性值的去重  
+    const seen = new Map();  
+    return a.filter(item => {  
+        if (item && typeof item === 'object' && item.hasOwnProperty(k)) {  
+            const key = item[k];  
+            // 如果还没见过这个属性值，则加入Map  
+            if (!seen.has(key)) {  
+                seen.set(key, true);  
+                return true;  
+            }  
+        }  
+        // 非对象或没有指定属性，或者属性值已见过，都排除在外  
+        return false;  
+    });  
+}
+
+
+const A  = [1 ,2, 3, 4]  
+    
+const B  = [3, 4, 5, 6]  
+
+let a1 = [
+    { id: 1, name: '张三', age: 20 },
+    { id: 2, name: '李四', age: 21 },
+    { id: 3, name: '小二', age: 23 },
+    { id: 4, name: '熊大', age: 23 },
+]
+let b1 = [
+    { id: 3, name: '小二', age: 23 },
+    { id: 4, name: '熊大', age: 23 },
+    { id: 5, name: '小明', age: 24 },
+    { id: 6, name: '小红', age: 25 }
+]
+
+// console.log('%c [ difference ]-288', 'font-size:13px; background:pink; color:#bf2c9f;', unique([...a1,...b1], 'id'))
+// console.log('%c [ difference ]-288', 'font-size:13px; background:pink; color:#bf2c9f;', unique([...A,...B]))
+const round = function (n, dight) {
+    // 将输入的数字转换为字符串
+    n = Number(n).toString();
+    // 如果是科学计算法
+    if (n.includes('e')) {
+        // 分离系数和指数
+        let [coefficient, exponent] = n.split('e');
+
+        // 如果系数是小数进行抹平
+        if (coefficient.includes('.')) {
+            const arr = coefficient.split('.');
+            const dotLen = arr[1].length;
+            exponent = exponent - dotLen;
+            coefficient = coefficient.replace('.', '');
+        }
+        // 处理指数大于0的情况（整数部分）
+        if (exponent > 0) {
+            // 构造补零部分
+            const end = '0'.repeat(exponent);
+            // 合并系数和补零部分
+            const rt = coefficient + end;
+            // 如果指定保留小数位数，则返回带小数的结果
+            if (dight) return rt + '.' + '0'.repeat(dight);
+            // 如果补零位数大于系数位数，直接返回结果
+            if (exponent > coefficient.length) return rt;
+            // 补零位数小于等于系数位数，截取结果
+            return (rt + '0'.repeat(dight)).slice(0, -1 * dight);
+        } else if (exponent < 0) { // 处理指数小于0的情况（小数部分）
+            // 补零形成小数
+            n = '0.' + coefficient.padStart(-exponent, 0);
+            // 如果未指定小数位数，直接返回结果
+            if (dight === undefined) return n;
+            // 四舍五入
+            const r = (Math.round(n * 10 ** exponent / (10 ** (exponent - dight))) / 10 ** dight).toString();
+            // 处理科学计数法结果
+            if (r.includes('e')) {
+                let [coefficient, exponent] = r.split('e'); 
+                if (coefficient.includes('.')) {
+                    const arr = coefficient.split('.');
+                    const dotLen = arr[1].length;
+                    exponent = exponent - dotLen;
+                    coefficient = coefficient.replace('.', '');
+                }
+                // 返回补零形成的小数
+                return '0.' + coefficient.padStart(-exponent, 0);
+            } else {
+                // 返回四舍五入后的结果
+                return r;
+            }
+        }
+    } else { // 非科学计算法
+        if (n.includes('.')) { // 处理小数
+            const arr = n.split('.');
+            let dotLen = arr[1].length;
+            // 补零保留小数位数
+            if (dight > dotLen) return n.padEnd(n.length + dight - dotLen, '0');
+            // 如果未指定小数位数，直接返回结果
+            if (dight === undefined) return n;
+            // 四舍五入
+            return Math.round(n * 10 ** dotLen / (10 ** (dotLen - dight))) / 10 ** dight;
+        } else { // 处理整数
+            // 保留小数位数
+            return Number(n).toFixed(dight);
+        }
+    }
+}
+
+class Num {
+    constructor(a) {
+        // 初始化计算器
+        this.a = a || 0;
+    }
+
+    // 四舍五入 到指定位数
+    round(dight) {
+        // 将输入的数字转换为字符串
+        let n = Number(this.a).toString();
+        // 结果
+        let result = n;
+        // 如果是科学计算法
+        if (n.includes('e')) {
+            // 分离系数和指数
+            let [coefficient, exponent] = n.split('e');
+    
+            // 如果系数是小数进行抹平
+            if (coefficient.includes('.')) {
+                const arr = coefficient.split('.');
+                const dotLen = arr[1].length;
+                exponent = exponent - dotLen;
+                coefficient = coefficient.replace('.', '');
+            }
+    
+            // 处理指数大于0的情况（整数部分）
+            if (exponent > 0) {
+                // 构造补零部分
+                const end = '0'.repeat(exponent);
+                // 合并系数和补零部分
+                const rt = coefficient + end;
+                // 如果指定保留小数位数，则返回带小数的结果
+                if (dight)  {
+                    result = rt + '.' + '0'.repeat(dight)
+                } else if (exponent > coefficient.length)  { //  // 如果补零位数大于系数位数，直接返回结果
+                    result = rt
+                } else{  // 补零位数小于等于系数位数，截取结果
+                    result = (rt + '0'.repeat(dight)).slice(0, -1 * dight);
+                }
+            } else if (exponent < 0) { // 处理指数小于0的情况（小数部分）
+                // 补零形成小数
+                n = '0.' + coefficient.padStart(-exponent, 0);
+                // 如果未指定小数位数，直接返回结果
+                if (dight === undefined) {
+                    result = n;
+                } else{
+                    // 四舍五入
+                    const r = (Math.round(n * 10 ** exponent / (10 ** (exponent - dight))) / 10 ** dight).toString();
+                    // 处理科学计数法结果
+                    if (r.includes('e')) {
+                        let [coefficient, exponent] = r.split('e'); 
+                        if (coefficient.includes('.')) {
+                            const arr = coefficient.split('.');
+                            const dotLen = arr[1].length;
+                            exponent = exponent - dotLen;
+                            coefficient = coefficient.replace('.', '');
+                        }
+                        // 返回补零形成的小数
+                        result = '0.' + coefficient.padStart(-exponent, 0);
+                    } else {
+                        // 返回四舍五入后的结果
+                        result = r;
+                    }
+                }
+            }
+        } else { // 非科学计算法
+            if (n.includes('.')) { // 处理小数
+                const arr = n.split('.');
+                let dotLen = arr[1].length;
+                // 补零保留小数位数
+                if (dight > dotLen) {
+                    result = n.padEnd(n.length + dight - dotLen, '0');
+                } else if (dight === undefined){  // 如果未指定小数位数，直接返回结果 
+                    result = n;
+                } else { // 四舍五入
+                    const r = Math.round((n * (10 ** dotLen)) / (10 ** (dotLen - dight))) / (10 ** dight);
+                    if(Number.isInteger(r)){
+                        result = r.toFixed(dight);
+                    } else{
+                        result = r
+                    }
+                }
+            } else { // 处理整数
+                // 保留小数位数
+                result =  Number(n).toFixed(dight);
+            }
+        }
+        this.a = result;
+        return this;
+    }
+   
+    // 计算函数
+    calc(type, a=0, b=0, digit) {
+        // 获取 a 和 b 的小数位数
+        const aLen = a.toString().split('.')[1]?.length || 0;
+        const bLen = b.toString().split('.')[1]?.length || 0;
+        // 计算最大位数，用于保留计算结果的精度
+        let maxLen = Math.pow(10, Math.max(aLen, bLen));
+        // 检查计算类型是否合法
+        if (![0, 1, 2, 3].includes(type)) throw new Error('type参数错误');
+        // 根据计算类型进行相应的运算
+        const result = type === 0 ? 
+                        (a * maxLen + b * maxLen) / maxLen : type === 1 ? 
+                        (a * maxLen - b * maxLen) / maxLen : type === 2 ?  
+                        (a * maxLen) * (b * maxLen) / (maxLen * maxLen) : 
+                        (a * maxLen) / (b * maxLen);
+        // 调用四舍五入函数对结果进行精度控制
+        this.a = result
+        return this.round(digit).toValue();
+    }
+    
+    // 加法
+    add(b, digit) {
+        let a = this.a
+        // 如果 a 是数组，则递归处理多个数的加法
+        if(Array.isArray(b)){
+            this.a =  b.length ? b.reduce((p, c) => (this.add(c, digit),this.a), a) : a
+        } else{
+            this.a =  this.calc(0, a, b, digit);
+        }
+        return this
+    }
+
+    // 减法
+    sub (b, digit) {
+        let a = this.a
+        // 如果 a 是数组，则递归处理多个数的减法
+        if( Array.isArray(b)){
+            this.a =  b.length ? b.reduce((p, c) => (this.sub(c, digit),this.a),a) : a
+        } else{
+            this.a =  this.calc(1, a, b, digit);
+        }
+        return this
+    }
+
+    // 乘法
+    mul (b, digit) {
+        let a = this.a
+        // 如果 a 是数组，则递归处理多个数的乘法
+        if(Array.isArray(b)){
+            this.a = b.length ? b.reduce((p, c) => (this.mul(c, digit),this.a), a) : a
+        } else{
+            this.a = this.calc(2, a, b, digit);
+        }
+       
+        return this
+    }
+
+    // 除法
+    div (b, digit) {
+        let a = this.a
+        // 如果 a 是数组，则递归处理多个数的除法
+        if(Array.isArray(b)){
+            if(!a){
+                this.a = 0
+            } else{
+                this.a = b.length ? b.reduce((p, c) => (this.div(c, digit),this.a),a) : a
+            }
+        } else{
+            if(!a || !b ){
+                this.a = 0
+            } else{
+                this.a = this.calc(3, a, b, digit);
+            }
+        }
+      
+        return this
+    }
+    toValue () {
+        return this.a;
+    }
+}
+
+function num(a){
+    return new Num(a)
+}
+
+
+console.log('%c [ num ]-571', 'font-size:13px; background:pink; color:#bf2c9f;', num(1).add([4,5,6]).round(2).toValue())
+console.log('%c [ num ]-571', 'font-size:13px; background:pink; color:#bf2c9f;', num(0.1).add(0.2,2).toValue())
+console.log('%c [ num ]-571', 'font-size:13px; background:pink; color:#bf2c9f;', num(1).add(2.567).round(2).toValue())
+console.log('%c [ num ]-571', 'font-size:13px; background:pink; color:#bf2c9f;', num(10).sub([1,2,3,3]).round(2).toValue())
+console.log('%c [ num ]-571', 'font-size:13px; background:pink; color:#bf2c9f;', num(10).sub([1,2,3,3],2).toValue())
+console.log('%c [ num ]-571', 'font-size:13px; background:pink; color:#bf2c9f;', num(0.11).mul([0.4], 1).toValue())
+console.log('%c [ num ]-571', 'font-size:13px; background:pink; color:#bf2c9f;', num(0.11).mul([0.4]).round(1).toValue())
+console.log('%c [ num ]-571', 'font-size:13px; background:pink; color:#bf2c9f;', num(0.993330000).round(6).toValue())
+console.log('%c [ num 0.013756613756613757 ]-571', 'font-size:13px; background:pink; color:#bf2c9f;', num(13).div([3,5,7,9],3).toValue())
+
+console.log('%c [ num 0.013756613756613757 ]-571', 'font-size:13px; background:pink; color:#bf2c9f;', num(0.000000000001).add(['1',0.1]).toValue())
+
+
+
+/**
+ * URL模板参数格式化（GET请求URL模板）
+ *
+ * @param {String} URL - 模板路径，例如：'/uap/msg/announcementRecord/{sysId}/{tenantId}/{userId}' 或 '/uap/msg/announcementRecord'
+ * @param {Object} params - 传入的参数，包含路径参数或不包含
+ * @param {Boolean} flag - 是否拼接路径和查询参数
+ * @returns {String} - 格式化后的URL
+ */
+ const urlTmtFmt = function (urlTmp, params = {}) {
+    // 参数类型校验
+    if (typeof urlTmp !== 'string' || typeof params !== 'object') {
+        throw new Error('Invalid arguments. urlTmp should be a string and params should be an object.');
+    }
+
+    // 判断模板路径中是否包含模板参数
+    if (/\{(\w+)\}/g.test(urlTmp)) {
+        // 使用新的对象来保存替换模板参数后的结果，避免影响原始参数对象
+        const replacedParams = { ...params };
+
+        // 替换模板参数
+        const url = urlTmp.replace(/\{(\w+)\}/g, (_, paramName) => {
+            if (replacedParams[paramName] === undefined) {
+                throw new Error(`Missing parameter value for "${paramName}" in URL template.`);
+            }
+            const paramValue = replacedParams[paramName];
+            delete replacedParams[paramName]; // 删除已替换的参数
+            return paramValue;
+        });
+
+        // 构建查询参数字符串
+        const queryParams = Object.keys(replacedParams).map(key => `${key}=${replacedParams[key]}`).join('&');
+
+        // 返回格式化后的URL，如果有查询参数则拼接在URL后面
+        return queryParams ? `${url}?${queryParams}` : url;
+    }
+
+    // 如果模板路径中不包含模板参数，则直接返回模板路径
+    return urlTmp;
+};
+// 使用示例
+const formattedUrl1 = urlTmtFmt('/uap/msg/announcementRecord/{sysId}/{tenantId}/{userId}', { sysId: 111, tenantId: 222, userId: 333 });
+console.log(formattedUrl1); // 输出：/uap/msg/announcementRecord/111/222/333
+
+const formattedUrl2 = urlTmtFmt('/uap/msg/announcementRecord/{sysId}/{tenantId}/{userId}', { sysId: 111, tenantId: 222, userId: 333, age: 10 });
+console.log(formattedUrl2); // 输出：/uap/msg/announcementRecord/111/222/333?age=10
+</script>
+</html>
