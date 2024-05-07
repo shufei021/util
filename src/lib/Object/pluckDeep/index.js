@@ -5,7 +5,7 @@
  */
 const pluckDeep = key => (obj, defaultVal) => {
     try {
-       return key.split('.').reduce((accum, key) => accum[key], obj) || defaultVal;
+       return key.split('.').reduce((accum, key) => accum?.[key], obj) || defaultVal;
     } catch (e) {
         return defaultVal;
     }

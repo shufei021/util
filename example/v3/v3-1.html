@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>v3</title>
 </head>
+
 <body>
     <div id="app">
         {{ message }}
@@ -18,32 +20,106 @@
       }
     }
   </script>
-  <script src="../../build/lib/index.js"></script>
-  <script src="https://cdn.bootcdn.net/ajax/libs/vConsole/3.15.1/vconsole.min.js"></script>
-  <script type="module">
+<script src="../../build/lib/index.js"></script>
+<script src="https://cdn.bootcdn.net/ajax/libs/vConsole/3.15.1/vconsole.min.js"></script>
+
+
+<script type="module">
+    
     import { createApp, ref } from 'vue'
 
     const leftConfig = {}
+
     const rightConfig = {}
+
 
     const app =
 
     createApp({
-        setup() {
+        setup () {
             const count = ref(0)
+            const message = ref('Hello Vue 3!')
             const objectOfAttrs = ref({
                 id: 'container',
                 class: 'wrapper'
             })
-            function handleClick() {
-                rutils.downloadByImgLink('https://img20.360buyimg.com/img/s130x130_jfs/t1/18313/6/11424/147396/5c8f6a4cE83a6d7e2/688874585858d5f4.jpg!cc_130x130.avif','商品1')
+            function handleClick () {
+                rutils.downloadByImgLink('https://p3-passport.byteacctimg.com/img/user-avatar/5af07e21445563789fa809772c97f4ce~100x100.awebp', '商品1')
             }
-            return { count, objectOfAttrs, handleClick }
+            return { count, message, objectOfAttrs, handleClick }
         },
         template: `<div v-bind="objectOfAttrs" @click="handleClick">count is {{ count }}</div>`
     }).mount('#app')
-    new VConsole()
-
     
-  </script>
+    
+    // new VConsole()
+    
+
+
+
+/**
+ * @description 一个代理对象生产器，用于生成代理对象。代理对象可以拦截对目标对象属性的读取操作，并进行一些额外的处理。
+ * @param { Object } propxyObject 代理对象
+ * @param { Function } interceptor 拦截函数
+ * @param { Number } attempts 拦截函数请求失败尝试再次请求的次数
+ * @param { Number } delay 拦截函数请求失败尝试再次请求的时间间隔
+ * @returns 代理对象
+ */
+function propxyObjectGenerator(propxyObject, interceptor, { attempts = 3, delay = 1000 }={}) {
+    // 返回代理对象
+    return new Proxy(propxyObject, {
+        // 拦截对象属性的读取操作
+        get(target, propKey, receiver) {
+            return (...args) => interceptor(propKey)
+            .then((data) => data)
+            .catch(async e => {
+                if ((interceptor.count || 0) < attempts) {
+                    interceptor.count = (interceptor.count || 0) + 1
+                    return new Promise((resolve) =>{
+                        setTimeout(()=>{
+                            resolve(receiver[propKey](...args))
+                        }, delay)
+                    })
+                } else {
+                    interceptor.count = undefined
+                    return Promise.reject(e)
+                }
+            })
+        }
+    })
+}
+let count = 0    
+const api = {
+    getData(){
+        count++
+        return new Promise((resolve, reject) => {
+            setTimeout(() => {
+                if(count === 2){
+                    console.log('%c [ 成功 ]-99', 'font-size:13px; background:pink; color:#bf2c9f;', )
+                    resolve({
+                        code: 200,
+                        data: {
+                            name: '张三',
+                            age: 18             
+                        }
+                    })
+                } else{
+                    reject('请求失败')
+                }
+            },1000)
+        })    
+    }
+}
+const obj = propxyObjectGenerator(api, api.getData)
+
+obj.getData().then(res=>{
+    console.log('%c [ res1 ]-116', 'font-size:13px; background:pink; color:#bf2c9f;', res)
+})
+
+obj.getData().then(res=>{
+    console.log('%c [ res2 ]-116', 'font-size:13px; background:pink; color:#bf2c9f;', res)
+})
+
+
+</script>
 </html>
