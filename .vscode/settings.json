@@ -1,33 +1,11 @@
 {
-    // 每次保存的时候将代码按格式进行修复
+    // 保存时-自动格式化 - 启用eslint
     "editor.codeActionsOnSave": {
-      "source.fixAll": "explicit",
       "source.fixAll.eslint": "explicit"
     },
-    "eslint.validate": ["javascript", "javascriptreact", "vue"],
-    "[javascript]": {
-      "editor.defaultFormatter": "esbenp.prettier-vscode"
-    },
-    "[vue]": {
-      "editor.defaultFormatter": "esbenp.prettier-vscode"
-    },
-    "[jsonc]": {
-      "editor.defaultFormatter": "esbenp.prettier-vscode"
-    },
-    "[html]": {
-      "editor.defaultFormatter": "vscode.html-language-features"
-    },
-    "[css]": {
-      "editor.defaultFormatter": "esbenp.prettier-vscode"
-    },
-    "fileheader.customMade": {
-      "Description": "", // 函数注释生成之后，光标移动到这里
-      "Author": "git config user.name", // 创建文件的作者
-      "Date": "Do not edit"
-    },
-    // 这里是实现函数名后边有空格的效果
-    "javascript.format.insertSpaceBeforeFunctionParenthesis": true,
-    "editor.formatOnType": true //开启自动格式化
+    "javascript.inlayHints.enumMemberValues.enabled": false,
+    "javascript.inlayHints.functionLikeReturnTypes.enabled": true,
+    "javascript.inlayHints.parameterTypes.enabled": true,
+    "typescript.inlayHints.parameterTypes.enabled": true,
+    "javascript.inlayHints.variableTypes.enabled": true
   }
-  
-  
