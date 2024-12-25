@@ -4,6 +4,6 @@
  * @param {Object} params - 参数对象
  * @returns {String} - 参数序列化后的字符串
  */
-export function urlSerialize(baseURL: string, params: object = {}): string {
+export function urlSerialize(baseURL: string, params:  Record<string, any> = {}): string {
     return Object.keys(params).reduce((p, c) => (p += (p === baseURL ? '?' : '&') + `${c}=${encodeURIComponent(params[c])}`), baseURL)
 }

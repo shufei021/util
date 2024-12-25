@@ -1,4 +1,3 @@
-/// <reference types="node" />
 /**
  * @description Buffer下载文件
  * @param {Buffer} buffer

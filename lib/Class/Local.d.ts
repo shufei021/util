@@ -5,10 +5,10 @@ declare class Local {
     static remove: (key: string) => void;
     static parse: (v: any) => any;
     static toStr: {
-        (value: any, replacer?: ((this: any, key: string, value: any) => any) | undefined, space?: string | number | undefined): string;
-        (value: any, replacer?: (string | number)[] | null | undefined, space?: string | number | undefined): string;
+        (value: any, replacer?: (this: any, key: string, value: any) => any, space?: string | number): string;
+        (value: any, replacer?: (number | string)[] | null, space?: string | number): string;
     };
-    static isStr: (v: any) => boolean;
+    static isStr: (v: any) => v is string;
     static isObj: (v: any) => boolean;
     static isNum: (n: any) => boolean;
     static hasOwn: (a: string) => boolean;

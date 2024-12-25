@@ -4,4 +4,4 @@
  * @param {Object} params - 参数对象
  * @returns {String} - 参数序列化后的字符串
  */
-export declare function urlSerialize(baseURL: string, params?: object): string;
+export declare function urlSerialize(baseURL: string, params?: Record<string, any>): string;
