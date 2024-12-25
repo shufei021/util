@@ -5,5 +5,5 @@
 export function getMaxZIndex(): number {
     // 获取HTML中所有的DOM
     const divs = document.querySelectorAll('*')
-    return Math.max(...[...divs].map(i => parseInt(getComputedStyle(i).zIndex) || 1))
+    return Math.max(...Array.from(divs).map(i => parseInt(getComputedStyle(i).zIndex) || 1))
 }
