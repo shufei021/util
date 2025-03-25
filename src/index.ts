@@ -123,4 +123,7 @@ export { indexdb } from './Class/IndexDB'
 export { local } from './Class/Local'
 export { session } from './Class/Session'
 export { num } from './Class/Num'
+export { default as ImageHotSpot } from './Class/ImageHotSpot'
+
+
 

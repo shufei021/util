@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>3D地形图</title>
+    <!-- 重要，请到 https://console.amap.com 申请 JS API 的 key和密钥 -->
+    <script>
+      window._AMapSecurityConfig = {
+        securityJsCode: '08734853e281a27d0c4da405dbd3a0d3',
+      };
+    </script>
+
+    <style>
+      body,
+      html {
+        margin: 0;
+        padding: 0;
+        font: 12px/16px Verdana, Helvetica, Arial, sans-serif;
+        width: 100%;
+        height: 100%;
+      }
+
+      #container {
+        height: 100%;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="container"></div>
+    <script src="https://webapi.amap.com/loader.js"></script>
+    <script
+      language="javascript"
+      src="//webapi.amap.com/maps?v=2.0&key=58a40dd3fe892aad0793f46325e404e9&plugin=AMap.ControlBar,AMap.ToolBar"
+    ></script>
+    <script src="../lib/index.umd.js"></script>
+    <script>
+      // var map;
+      // function mapInit() {
+      //   map = new AMap.Map('container', {
+      //     rotateEnable: true,
+      //     pitchEnable: true,
+      //     zoom: 17,
+      //     pitch: 50,
+      //     rotation: -15,
+      //     viewMode: '3D', //开启3D视图,默认为关闭
+      //     zooms: [2, 20],
+      //     center: [116.333926, 39.997245],
+      //   });
+
+      //   var controlBar = new AMap.ControlBar({
+      //     position: {
+      //       right: '10px',
+      //       top: '10px',
+      //     },
+      //   });
+      //   controlBar.addTo(map);
+
+      //   var toolBar = new AMap.ToolBar({
+      //     position: {
+      //       right: '40px',
+      //       top: '110px',
+      //     },
+      //   });
+      //   toolBar.addTo(map);
+      // }
+      // mapInit();
+
+
+      function loop(numbers,index,arr,count,result) {
+        const numbersItem = numbers[index]
+        if(!numbersItem)return
+        for(let i = 0; i < numbersItem.length; i++) {
+          arr[index] = numbersItem[i]*1
+          if(numbers.length - 1 === index ) {
+            if(arr.reduce((p,c)=>p+c,0)%2 === 0) {
+              count.count++
+            }
+            result.push([...arr])
+          } else{
+            loop(numbers,index + 1,arr,count,result)
+          }
+        }
+      }
+     
+      function solution(numbers) {
+        const len = numbers.length
+        if(len===1) return 4
+        numbers = numbers.map(i=>i+'')
+        let arr = []
+        let count = {count: 0}
+        const result = []
+        loop(numbers, 0, arr, count, result)
+        return count.count
+      }
+      function main() {
+        console.log(solution([123, 456, 789])===14);
+        console.log(solution([14329, 7568]) === 10);
+      }
+      main();
+      const a = [{id: "545185165387735040", code: "", barCode: "", skuBarCode: null, cover: "/150000000/20252/51666099970685055/545197026434949120.jpg", carouselList: ["/150000000/20252/51666099970685055/545197026434949120.jpg"], name: "sam-test-07", skuAmount: 4, erpMatchState: null, baseUnitName: "个s", minWholesalePrice: 0, maxWholesalePrice: 0, showWholesalePrice: true, saleStatus: 1, enable: 1, categoryPath: "174152939132432384", unifyUnitRate: 1, unifyPrice: 1, isExistPrice: null, supplierId: null, enableBatch: false, shelfLife: null, shelfLifeType: 0, warningPeriod: null, skuName: "", isAudit: 1}, {id: "545171298582503424", code: "", barCode: "", skuBarCode: null, cover: "/150000000/20252/51664592119231024/545190702049468416.jpg", carouselList: ["/150000000/20252/51664592119231024/545190702049468416.jpg", "/150000000/20252/51664593445115671/545190707611115520.jpg", "/150000000/20252/51664594070839930/545190710232555520.jpg"], name: "sam-test-07-3", skuAmount: 4, erpMatchState: null, baseUnitName: "个s", minWholesalePrice: 0, maxWholesalePrice: 0, showWholesalePrice: true, saleStatus: 1, enable: 1, categoryPath: "174152939132432384", unifyUnitRate: 1, unifyPrice: 1, isExistPrice: null, supplierId: null, enableBatch: false, shelfLife: null, shelfLifeType: 0, warningPeriod: null, skuName: "", isAudit: 1}, {id: "544926419742859264", code: "SP-02-12-20250000017", barCode: "", skuBarCode: null, cover: "/150000000/20252/51665910763087851/545196232843272192.jpg", carouselList: ["/150000000/20252/51665910763087851/545196232843272192.jpg"], name: "单位测试", skuAmount: 0, erpMatchState: null, baseUnitName: "圈", minWholesalePrice: 0, maxWholesalePrice: 0, showWholesalePrice: true, saleStatus: 1, enable: 1, categoryPath: "222688043724623872", unifyUnitRate: 1, unifyPrice: 1, isExistPrice: null, supplierId: null, enableBatch: false, shelfLife: null, shelfLifeType: 0, warningPeriod: null, skuName: "", isAudit: 1}, {id: "544888763164295168", code: "SP-02-12-20250000013", barCode: "", skuBarCode: null, cover: "/150000000/20252/51582695002739769/544847200644046848.jpg", carouselList: ["/150000000/20252/51582695002739769/544847200644046848.jpg", "/150000000/20252/51582694996437995/544847200618881024.jpg"], name: "test123", skuAmount: 0, erpMatchState: null, baseUnitName: "圈", minWholesalePrice: 0, maxWholesalePrice: 0, showWholesalePrice: true, saleStatus: 1, enable: 1, categoryPath: "222688043724623872", unifyUnitRate: 1, unifyPrice: 1, isExistPrice: null, supplierId: null, enableBatch: false, shelfLife: null, shelfLifeType: 0, warningPeriod: null, skuName: "", isAudit: 1}, {id: "544885926489391104", code: "SP-02-12-20250000014", barCode: "9636999999989", skuBarCode: "9636999999989", cover: "/150000000/20252/51596903109262837/544906793764069376.jpg", carouselList: ["/150000000/20252/51596903109262837/544906793764069376.jpg"], name: "条码打印333", skuAmount: 0, erpMatchState: null, baseUnitName: "圈", minWholesalePrice: 10, maxWholesalePrice: 10, showWholesalePrice: true, saleStatus: 1, enable: 1, categoryPath: "222688043724623872", unifyUnitRate: 1, unifyPrice: 1, isExistPrice: null, supplierId: null, enableBatch: false, shelfLife: null, shelfLifeType: 0, warningPeriod: null, skuName: "", isAudit: 1}, {id: "544837286102204416", code: "SP-02-12-20250000010", barCode: "", skuBarCode: null, cover: "/150000000/20252/51596942614163316/544906959460048896.jpg", carouselList: ["/150000000/20252/51596942614163316/544906959460048896.jpg", "/150000000/20252/51596943328103040/544906962454781952.jpg", "/150000000/20252/51596943611962488/544906963641769984.jpg"], name: "不同规格不同换算率", skuAmount: 3, erpMatchState: null, baseUnitName: "圈", minWholesalePrice: 0, maxWholesalePrice: 0, showWholesalePrice: true, saleStatus: 1, enable: 1, categoryPath: "222688043724623872", unifyUnitRate: 0, unifyPrice: 0, isExistPrice: null, supplierId: null, enableBatch: false, shelfLife: null, shelfLifeType: 0, warningPeriod: null, skuName: "", isAudit: 1}, {id: "544835443540262912", code: "SP-02-12-20250000007", barCode: "", skuBarCode: null, cover: "/150000000/20252/51597049564269794/544907408040861696.jpg", carouselList: ["/150000000/20252/51597049564269794/544907408040861696.jpg", "/150000000/20252/51597050027133996/544907409982824448.jpg"], name: "相同换算率", skuAmount: 3, erpMatchState: null, baseUnitName: "圈", minWholesalePrice: 10, maxWholesalePrice: 10, showWholesalePrice: true, saleStatus: 1, enable: 1, categoryPath: "222688043724623872", unifyUnitRate: 1, unifyPrice: 1, isExistPrice: null, supplierId: null, enableBatch: false, shelfLife: null, shelfLifeType: 0, warningPeriod: null, skuName: "", isAudit: 1}, {id: "544824613985574912", code: "SP-02-12-20250000004", barCode: "", skuBarCode: null, cover: "/150000000/20252/51665968918057909/545196476763021312.jpg", carouselList: ["/150000000/20252/51665968918057909/545196476763021312.jpg"], name: "lz-20250212", skuAmount: 0, erpMatchState: null, baseUnitName: "个", minWholesalePrice: 0, maxWholesalePrice: 0, showWholesalePrice: true, saleStatus: 1, enable: 1, categoryPath: "222688043724623872", unifyUnitRate: 1, unifyPrice: 1, isExistPrice: null, supplierId: null, enableBatch: true, shelfLife: 31, shelfLifeType: 0, warningPeriod: 3, skuName: "", isAudit: 1}, {id: "544542634182475776", code: "SP-02-11-20250000027", barCode: "pda909090", skuBarCode: "pda909090", cover: "/150000000/20252/51576166761492274/544819819216707584.jpg", carouselList: ["/150000000/20252/51576166761492274/544819819216707584.jpg"], name: "PDA三方商品1", skuAmount: 2, erpMatchState: null, baseUnitName: "圈", minWholesalePrice: 2, maxWholesalePrice: 30, showWholesalePrice: true, saleStatus: 1, enable: 1, categoryPath: "222688043724623872", unifyUnitRate: 1, unifyPrice: 0, isExistPrice: null, supplierId: null, enableBatch: false, shelfLife: null, shelfLifeType: 0, warningPeriod: null, skuName: "", isAudit: 1}, {id: "544542099865894912", code: "SP-02-11-20250000029", barCode: "pda909090", skuBarCode: "pda909090", cover: "/150000000/20252/51597275594968228/544908356079394816.jpg", carouselList: ["/150000000/20252/51597275594968228/544908356079394816.jpg", "/150000000/20252/51597276083135284/544908358130409472.jpg", "/150000000/20252/51597276315648317/544908359103488000.jpg", "/150000000/20252/51597276545206223/544908360068177920.jpg"], name: "PDA三方商品", skuAmount: 0, erpMatchState: null, baseUnitName: "圈", minWholesalePrice: 2, maxWholesalePrice: 2, showWholesalePrice: true, saleStatus: 1, enable: 1, categoryPath: "222688043724623872", unifyUnitRate: 1, unifyPrice: 1, isExistPrice: null, supplierId: null, enableBatch: false, shelfLife: null, shelfLifeType: 0, warningPeriod: null, skuName: "", isAudit: 1}, {id: "544208250418061312", code: "SP-02-10-20250000015", barCode: "123123", skuBarCode: "123123", cover: "/150000000/20252/51599310026281783/544916889105670144.jpg", carouselList: ["/150000000/20252/51599310026281783/544916889105670144.jpg"], name: "同价调拨商品", skuAmount: 0, erpMatchState: null, baseUnitName: "圈", minWholesalePrice: 10, maxWholesalePrice: 10, showWholesalePrice: true, saleStatus: 1, enable: 1, categoryPath: "222688043724623872", unifyUnitRate: 1, unifyPrice: 1, isExistPrice: null, supplierId: null, enableBatch: false, shelfLife: null, shelfLifeType: 0, warningPeriod: null, skuName: "", isAudit: 1}, {id: "543008208441049088", code: "SP-02-07-20250000001", barCode: "", skuBarCode: null, cover: null, carouselList: null, name: "cedddddd", skuAmount: 4, erpMatchState: null, baseUnitName: "圈", minWholesalePrice: 10, maxWholesalePrice: 10, showWholesalePrice: true, saleStatus: 1, enable: 1, categoryPath: "222688043724623872", unifyUnitRate: 1, unifyPrice: 1, isExistPrice: null, supplierId: null, enableBatch: false, shelfLife: null, shelfLifeType: 0, warningPeriod: null, skuName: "", isAudit: 1}, {id: "542358656105029632", code: "SP-02-05-20250000001", barCode: "123", skuBarCode: "123", cover: null, carouselList: null, name: "最近进价222", skuAmount: 0, erpMatchState: null, baseUnitName: "圈", minWholesalePrice: 10, maxWholesalePrice: 10, showWholesalePrice: true, saleStatus: 1, enable: 1, categoryPath: "222688043724623872", unifyUnitRate: 1, unifyPrice: 1, isExistPrice: null, supplierId: null, enableBatch: false, shelfLife: null, shelfLifeType: 0, warningPeriod: null, skuName: "", isAudit: 1}, {id: "538357757422530560", code: "SP-01-25-20250000008", barCode: "", skuBarCode: null, cover: "/150000000/20252/51664178543724465/545188967385997312.jpg", carouselList: ["/150000000/20252/51664178543724465/545188967385997312.jpg"], name: "lzh新增采购测试商品", skuAmount: 0, erpMatchState: null, baseUnitName: "圈", minWholesalePrice: 7, maxWholesalePrice: 7, showWholesalePrice: true, saleStatus: 1, enable: 1, categoryPath: "222688043724623872", unifyUnitRate: 1, unifyPrice: 1, isExistPrice: null, supplierId: null, enableBatch: false, shelfLife: null, shelfLifeType: 0, warningPeriod: null, skuName: "", isAudit: 1}, {id: "538320041532219392", code: "SP-01-25-20250000003", barCode: "1", skuBarCode: "1", cover: "/150000000/20252/51582694990369221/544847200593715200.jpg", carouselList: ["/150000000/20252/51582694990369221/544847200593715200.jpg", "/150000000/20252/51582694992181796/544847200602103808.jpg", "/150000000/20252/51582695002739769/544847200644046848.jpg", "/150000000/20252/51582694996437995/544847200618881024.jpg"], name: "覆盖导入", skuAmount: 4, erpMatchState: null, baseUnitName: "圈", minWholesalePrice: 0, maxWholesalePrice: 0, showWholesalePrice: true, saleStatus: 0, enable: 1, categoryPath: "222688043724623872", unifyUnitRate: 1, unifyPrice: 1, isExistPrice: null, supplierId: null, enableBatch: false, shelfLife: null, shelfLifeType: 0, warningPeriod: null, skuName: "", isAudit: 1}, {id: "538296486409035776", code: "SP-01-25-20250000001", barCode: "", skuBarCode: null, cover: null, carouselList: null, name: "采购22价格", skuAmount: 0, erpMatchState: null, baseUnitName: "圈", minWholesalePrice: 12, maxWholesalePrice: 12, showWholesalePrice: true, saleStatus: 1, enable: 1, categoryPath: "222688043724623872", unifyUnitRate: 1, unifyPrice: 1, isExistPrice: null, supplierId: null, enableBatch: false, shelfLife: null, shelfLifeType: 0, warningPeriod: null, skuName: "", isAudit: 1}, {id: "538047160860532736", code: "SP-01-24-20250000025", barCode: "", skuBarCode: null, cover: null, carouselList: null, name: "换算关系22222", skuAmount: 0, erpMatchState: null, baseUnitName: "圈", minWholesalePrice: 23, maxWholesalePrice: 23, showWholesalePrice: true, saleStatus: 1, enable: 1, categoryPath: "222688043724623872", unifyUnitRate: 1, unifyPrice: 1, isExistPrice: null, supplierId: null, enableBatch: false, shelfLife: null, shelfLifeType: 0, warningPeriod: null, skuName: "", isAudit: 1}, {id: "537946254454222848", code: "SP-01-24-20250000001", barCode: "", skuBarCode: null, cover: null, carouselList: null, name: "换算关系111", skuAmount: 0, erpMatchState: null, baseUnitName: "圈", minWholesalePrice: 10, maxWholesalePrice: 10, showWholesalePrice: true, saleStatus: 1, enable: 1, categoryPath: "222688043724623872", unifyUnitRate: 1, unifyPrice: 1, isExistPrice: null, supplierId: null, enableBatch: false, shelfLife: null, shelfLifeType: 0, warningPeriod: null, skuName: "", isAudit: 1}, {id: "537372578067546112", code: "SP-01-22-20250000003", barCode: "", skuBarCode: null, cover: null, carouselList: null, name: "停用sku", skuAmount: 3, erpMatchState: null, baseUnitName: "圈", minWholesalePrice: 0, maxWholesalePrice: 0, showWholesalePrice: true, saleStatus: 0, enable: 1, categoryPath: "222688043724623872", unifyUnitRate: 1, unifyPrice: 1, isExistPrice: null, supplierId: null, enableBatch: false, shelfLife: null, shelfLifeType: 0, warningPeriod: null, skuName: "", isAudit: 1}, {id: "536961056367435776", code: "SP-01-21-20250000003", barCode: "", skuBarCode: null, cover: null, carouselList: null, name: "批次副单位商品", skuAmount: 0, erpMatchState: null, baseUnitName: "圈", minWholesalePrice: 2, maxWholesalePrice: 2, showWholesalePrice: true, saleStatus: 1, enable: 1, categoryPath: "222688043724623872", unifyUnitRate: 1, unifyPrice: 1, isExistPrice: null, supplierId: null, enableBatch: true, shelfLife: null, shelfLifeType: 0, warningPeriod: null, skuName: "", isAudit: 1}]
+
+    </script>
+  </body>
+</html>

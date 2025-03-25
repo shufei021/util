@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Drag and Drop Example</title>
+    <style>
+      :root {
+        --primary-color: #378efb;
+        --secondary-color: #7b38f4;
+        --border-color: #ccc;
+        --text-color: #333;
+        --text-secondary: #999;
+        --bg-hot-area: rgba(20, 71, 255, 0.2);
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      html,
+      body {
+        height: 100%;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+      }
+
+      body {
+        padding: 2rem;
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+        background-color: #f5f5f5;
+      }
+
+      .section-title {
+        font-size: 1.75rem;
+        color: var(--text-color);
+        margin-bottom: 0.5rem;
+      }
+
+      .section-subtitle {
+        font-size: 1rem;
+        color: var(--text-secondary);
+      }
+
+      .editor {
+        display: flex;
+        gap: 2rem;
+        background: white;
+        padding: 1.5rem;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      .container {
+        width: 400px;
+        height: 400px;
+        position: relative;
+        background-color: #f5f5f5;
+        border-radius: 4px;
+      }
+
+      .controls {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+
+      .btn {
+        padding: 0.5rem 1rem;
+        border: none;
+        border-radius: 4px;
+        background: var(--primary-color);
+        color: white;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .btn:hover {
+        background: #2670d8;
+      }
+
+      .btn-secondary {
+        background: #f0f0f0;
+        color: var(--text-color);
+      }
+
+      .btn-secondary:hover {
+        background: #e0e0e0;
+      }
+
+      .hot-areas-list {
+        margin-top: 1rem;
+        padding-left: 1.5rem;
+      }
+
+      .hot-areas-list li {
+        margin-bottom: 0.5rem;
+      }
+
+      .hot-areas-list input {
+        padding: 0.5rem;
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        width: 100%;
+      }
+
+      .preview-container {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      .img-container {
+        position: relative;
+        display: inline-block;
+        min-width: 100px;
+        max-width: 325px;
+        margin: 1rem auto;
+      }
+
+      .hot-square {
+        background-color: var(--bg-hot-area);
+        border: 1px dashed var(--primary-color);
+        position: absolute;
+      }
+
+      .hot-handle {
+        width: 8px;
+        height: 8px;
+        background-color: var(--primary-color);
+        position: absolute;
+        border-radius: 50%;
+      }
+
+      .hot-view {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 0.875rem;
+        text-align: center;
+        transition: opacity 0.3s ease;
+        background-color: rgba(0, 0, 0, 0.2);
+      }
+
+      .hot-view:hover {
+        background-color: rgba(0, 0, 0, 0.5);
+      }
+
+      #file {
+        display: none;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="editor-section">
+      <h2 class="section-title">
+        编辑区
+        <span class="section-subtitle">保存配置后可在下方预览区查看</span>
+        <span
+          class="section-subtitle overlap-tip"
+          style="color: #d81e06; display: none"
+          >热区之间不能重叠</span
+        >
+      </h2>
+      <div class="editor">
+        <div class="container"></div>
+        <div class="controls">
+          <button id="upload" class="btn">上传热区图片</button>
+          <input id="file" type="file" accept="image/*" />
+          <button id="btn" class="btn">添加热区</button>
+          <button id="del" class="btn btn-secondary">删除热区图片</button>
+          <button id="save" class="btn">保存配置</button>
+          <ol id="ol" class="hot-areas-list"></ol>
+        </div>
+      </div>
+    </div>
+
+    <div class="preview-section">
+      <h2 class="section-title">
+        预览区 <span class="section-subtitle">点击热区可查看关联内容</span>
+      </h2>
+      <div class="preview-container">
+        <div class="img-container">
+          <img
+            id="img"
+            style="display: none; width: 100%; height: 100%"
+            alt="预览图"
+          />
+        </div>
+        <span class="info"></span>
+      </div>
+    </div>
+  </body>
+  <script src="../lib/index.umd.js"></script>
+  <script>
+    const imgHot = new rutils.ImageHotSpot({
+      el: ".container",
+      customUpload: true,
+      addMode:'manual',
+      scaleMode: "auto", // 上传的热区图片缩放模式 auto 自适应 enlarge 放大
+      manualAdd:(creat)=>{
+       return false
+      },
+      beforeDel: (index, square, delFunc) => {
+        square?.data?.remove();
+        delFunc();
+      },
+      beforeAdd: () => {
+        alert("请先传入热区图片，再添加热区");
+      },
+      overlapCallback(isOverlap) {
+        document.querySelector(".overlap-tip").style.display = isOverlap
+          ? ""
+          : "none";
+      },
+      squarePos:{
+        // w:'200px',
+        // h:'200px'
+      }
+    });
+
+    function fileToBase64(file) {
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = function () {
+          resolve(this.result);
+        };
+      });
+    }
+
+    const dataMap = {};
+
+    let sizeInfo = { w: 0, h: 0 };
+
+    // 上传热区图片
+    document.querySelector("#upload").onclick = () => {
+      document.querySelector("#file").click();
+    };
+
+    // 热区图片回显
+    document.querySelector("#file").onchange = function (e) {
+      fileToBase64(e.target.files[0]).then((res) => {
+        imgHot.uploadHotImg(res).then(({ w, h }) => {
+          sizeInfo = {
+            w,
+            h,
+          };
+        });
+        document.querySelector("#img").src = res;
+        document.querySelector("#img").style.display = "block";
+      });
+    };
+
+    // 新增热区
+    document.querySelector("#btn").onclick = () => {
+      imgHot
+        .addHotArea()
+        .then(({ index, square }) => {
+          const li = document.createElement("li");
+          square.data = li;
+          li.innerHTML = `<input type="text" placeholder="请输入关联内容">`;
+          document.querySelector("#ol").appendChild(li);
+          dataMap[index] = () => li.querySelector("input").value;
+        })
+        .catch(() => {});
+    };
+
+    // 删除热区图片
+    document.querySelector("#del").onclick = () => {
+      imgHot.destroy();
+      document.querySelector("#img").style.display = "none";
+      document.querySelector("#img").src = "";
+      document
+        .querySelectorAll(".img-container .hot-view")
+        .forEach((i) => i.remove());
+      document.querySelectorAll("#ol li").forEach((i) => i.remove());
+    };
+
+    document.querySelector("#save").onclick = () => {
+      const imgContainer = document.querySelector(".img-container");
+      const img = document.querySelector("#img");
+      const { offsetHeight, offsetWidth } = img;
+      // 获取 所有热区信息
+      const hotSquares = Array.from(
+        document.querySelectorAll(".container .hot-square")
+      );
+      const data = hotSquares.map((i, index) => {
+        const { top, left, width, height } = i.style;
+        return {
+          x: parseInt(left),
+          y: parseInt(top),
+          width: parseInt(width),
+          height: parseInt(height),
+          top: parseInt(top),
+          left: parseInt(left),
+          data: dataMap[index + 1](),
+        };
+      });
+
+      imgContainer.querySelectorAll(".hot-view").forEach((i) => i.remove());
+
+      const scale = offsetWidth / sizeInfo.w;
+      data.forEach((i) => {
+        const div = document.createElement("div");
+        div.className = "hot-view";
+        div.innerHTML = i.data;
+        div.data = i.data;
+        div.style.cssText = `position:absolute; top:${i.top * scale}px; left:${
+          i.left * scale
+        }px; width:${i.width * scale}px; height:${
+          i.height * scale
+        }px; background-color:rgba(20, 71, 255, 0.2);border: 1px solid red;box-sizing:border-box;`;
+        imgContainer.appendChild(div);
+      });
+    };
+    document.querySelector(".img-container").onclick = (e) => {
+      document.querySelector(".info").innerHTML =
+        e.target.className === "hot-view" ? e.target.data : "";
+    };
+
+
+  </script>
+</html>
