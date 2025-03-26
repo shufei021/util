@@ -199,6 +199,8 @@
     </div>
   </body>
   <script src="../lib/index.umd.js"></script>
+  <!-- <script src="./ImageHotSpot .js"></script> -->
+  
   <script>
     const imgHot = new rutils.ImageHotSpot({
       el: ".container",
@@ -206,7 +208,7 @@
       addMode:'manual',
       scaleMode: "auto", // 上传的热区图片缩放模式 auto 自适应 enlarge 放大
       manualAdd:(creat)=>{
-       return false
+       return true
       },
       beforeDel: (index, square, delFunc) => {
         square?.data?.remove();
@@ -215,10 +217,28 @@
       beforeAdd: () => {
         alert("请先传入热区图片，再添加热区");
       },
+      afterAdd({index, square }){
+        const li = document.createElement("li");
+          square.data = li;
+          li.innerHTML = `<input type="text" placeholder="请输入关联内容">`;
+          document.querySelector("#ol").appendChild(li);
+          dataMap[index] = () => li.querySelector("input").value;
+      },
       overlapCallback(isOverlap) {
         document.querySelector(".overlap-tip").style.display = isOverlap
           ? ""
           : "none";
+      },
+      style:{
+        seq:{
+          style:{
+            color:'black',
+            backgroundColor:'#fff',
+            left:'50%',
+            top:'50%',
+            transform:'translate(-50%,-50%)'
+          }
+        }
       },
       squarePos:{
         // w:'200px',
@@ -248,7 +268,9 @@
     // 热区图片回显
     document.querySelector("#file").onchange = function (e) {
       fileToBase64(e.target.files[0]).then((res) => {
+        console.log('%c [ res ]-267', 'font-size:13px; background:pink; color:#bf2c9f;', res)
         imgHot.uploadHotImg(res).then(({ w, h }) => {
+          console.log('%c [ uploadHotImg ]-255', 'font-size:13px; background:pink; color:#bf2c9f;')
           sizeInfo = {
             w,
             h,
@@ -263,13 +285,6 @@
     document.querySelector("#btn").onclick = () => {
       imgHot
         .addHotArea()
-        .then(({ index, square }) => {
-          const li = document.createElement("li");
-          square.data = li;
-          li.innerHTML = `<input type="text" placeholder="请输入关联内容">`;
-          document.querySelector("#ol").appendChild(li);
-          dataMap[index] = () => li.querySelector("input").value;
-        })
         .catch(() => {});
     };
 

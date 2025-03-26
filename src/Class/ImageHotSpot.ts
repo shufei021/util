@@ -66,6 +66,7 @@ interface StyleOptions {
 
 // 定义一个接口ImgHotOptions，用于配置图片热区插件
 interface ImgHotOptions {
+   
     // el：图片热区插件的容器，可以是字符串或HTMLElement类型
     el: string | HTMLElement;
     // customUpload：是否自定义上传，默认为false
@@ -82,6 +83,8 @@ interface ImgHotOptions {
     squarePos?: SquarePos;
     // beforeAdd：添加前的回调函数
     beforeAdd?: () => void;
+    // afterAdd：添加后的回调函数，参数为索引、元素和回调函数
+    afterAdd(arg0: { index: number; square: HTMLElement; }): unknown;
     // beforeDel：删除前的回调函数，参数为索引、元素和回调函数
     beforeDel?: (index: number, element: HTMLElement, callback: () => void) => void;
     // overlapCallback：重叠时的回调函数，参数为是否重叠
@@ -150,12 +153,13 @@ interface ImgHotOptions {
       this.defaultProps = {
         canvas: {
           className: "hot-container",
-          cssText: `width: 100%; height: 100%; position: relative; border: 1px dashed #ccc; box-sizing: border-box;`
+          cssText: `width: 100%; height: 100%; position: relative; border: 1px dashed #ccc; box-sizing: border-box;`,
+          ...(this.options?.style?.canvas || {}),
         },
         // 热区最外层容器默认样式
         container: {
           className: "hot-container",
-          cssText: `width: 100%; height: 100%; position: relative; border: 1px dashed #ccc; box-sizing: border-box;`,
+          cssText: `width: 100%; height: 100%; position: relative;`,
           ...(this.options?.style?.container || {}),
         },
         // 热区包裹默认样式
@@ -228,10 +232,10 @@ interface ImgHotOptions {
     initSquarePos(){
       // 将正方形位置初始化为一个对象，包含x、y、w、h四个属性
       this.squarePos = {
-        x: '0px',
-        y: '0px',
-        w: '80px',
-        h: '80px',
+        x: 0,
+        y: 0,
+        w: 80,
+        h: 80,
         // 如果options中存在squarePos属性，则将其合并到squarePos对象中
         ...(this.options.squarePos || {}),
       };
@@ -270,8 +274,9 @@ interface ImgHotOptions {
        }
        if(!this.container) return Promise.reject(new Error("Please initialize the instance first"));
        const seq = this.container.querySelectorAll(".hot-square").length + 1;
-       const square = this.createHotSquare(seq,{style:{ left: x , top: y, width: w, height:h }});
+       const square = this.createHotSquare(seq,{style:{ left: parseFloat(x) + "px" , top: parseFloat(y) + "px", width: parseFloat(w) + "px", height: parseFloat(h) + "px" }});
        this.canvas.appendChild(square);
+       this.options?.afterAdd?.({ index: seq, square });
        return Promise.resolve({ index: seq, square });
      }else{
        return Promise.reject(new Error("options addMode is not default"));
@@ -309,11 +314,11 @@ interface ImgHotOptions {
       const element = document.createElement(tagName);
   
       // 新增 cssText 处理逻辑
-      const handleStyleAttributes = (element: HTMLElement, props: { cssText: any; style: any; }) => {
+      const handleStyleAttributes = (element: HTMLElement, props: { cssText: string; style: object; }) => {
           // 先处理 cssText
           if (props.cssText) {
               element.style.cssText = props.cssText;
-              delete props.cssText; // 处理完就删除避免重复处理
+              Reflect.deleteProperty(props, 'cssText'); // 处理完就删除避免重复处理
           }
   
           // 处理常规 style 属性
@@ -323,7 +328,7 @@ interface ImgHotOptions {
               } else if (typeof props.style === 'object') {
                   Object.assign(element.style, props.style);
               }
-              delete props.style;
+              Reflect.deleteProperty(props, 'style')
           }
       };
   
@@ -459,22 +464,48 @@ interface ImgHotOptions {
         const pos = this.canvas.getBoundingClientRect()
         const dix =  pos.left;
         const diy =  pos.top;
-        const recordX = e.clientX - dix;
-        const recordY = e.clientY - diy;
+        let recordX = e.clientX - dix;
+        let recordY = e.clientY - diy;
         const square = this.createElement("div", {className:"hot-line",style:{left:recordX + "px",top:recordY + "px",width:"0px",height:"0px",border:"1px solid red", boxSizing:'border-box',position:'absolute'} });
         this.canvas.appendChild(square);
         let width = 0;
         let height = 0;
+        const squareLeft = square.offsetLeft;
+        const squareTop = square.offsetTop;
+        const maxWidth = this.canvas.offsetWidth - squareLeft;
+        const maxHeight = this.canvas.offsetHeight -  squareTop;
+        const squareWidth = square.offsetWidth
+        const squareHeight = square.offsetHeight
         document.onmousemove = (ev) => {
           const { clientX, clientY } = ev;
+          const deltaX = e.clientX - clientX;
+          const deltaY = e.clientY - clientY;
           const w = clientX - dix - recordX;
           const h = clientY - diy - recordY;
+          let _w = w
+          let _h = h
+          if(clientX < e.clientX){
+            _w = squareWidth + deltaX
+            _w = _w > squareLeft ? squareLeft : _w
+            recordX = clientX - dix
+            recordX = recordX < 0 ? 0 : recordX
+          } else{
+            _w = w > maxWidth ? maxWidth : w
+          }
+          if(clientY < e.clientY){
+             _h = squareHeight + deltaY
+             _h = _h > squareTop ? squareTop : _h
+            recordY = clientY - diy
+            recordY = recordY < 0 ? 0 : recordY
+          } else{
+            _h = h > maxHeight? maxHeight: h
+          }
           square.style.left = recordX + "px";
           square.style.top = recordY + "px";
-          square.style.width = w + "px";
-          square.style.height = h + "px";
-          width = w
-          height = h
+          square.style.width = _w + "px";
+          square.style.height = _h + "px";
+          width = _w
+          height = _h
         };
         document.onmouseup = (e) => {
           square && this.canvas?.removeChild(square);

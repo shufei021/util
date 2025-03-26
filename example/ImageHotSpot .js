@@ -133,6 +133,7 @@ class ImageHotSpot {
      const seq = this.container.querySelectorAll(".hot-square").length + 1;
      const square = this.createHotSquare(seq,{style:{ left: x , top: y, width: w, height:h }});
      this.canvas.appendChild(square);
+     this.options?.afterAdd?.({ index: seq, square });
      return Promise.resolve({ index: seq, square });
    }else{
      return Promise.reject(new Error("options addMode is not default"));
@@ -317,32 +318,62 @@ class ImageHotSpot {
       const pos = this.canvas.getBoundingClientRect()
       const dix =  pos.left;
       const diy =  pos.top;
-      const recordX = e.clientX - dix;
-      const recordY = e.clientY - diy;
+      let recordX = e.clientX - dix;
+      let recordY =e.clientY - diy;
       const square = this.createElement("div", {className:"hot-line",style:{left:recordX + "px",top:recordY + "px",width:"0px",height:"0px",border:"1px solid red", boxSizing:'border-box',position:'absolute'} });
       this.canvas.appendChild(square);
       let width = 0;
       let height = 0;
+      const maxWidth = this.canvas.offsetWidth - square.offsetLeft;
+      const maxHeight = this.canvas.offsetHeight -  square.offsetTop;
+      const maxWidth1 = square.offsetLeft;
+      const maxHeight1 = square.offsetTop;
+      const squareWidth = square.offsetWidth - 2
+      const squareHeight = square.offsetHeight - 2
       document.onmousemove = (ev) => {
         const { clientX, clientY } = ev;
+        const deltaX = e.clientX - clientX;
+        const deltaY = e.clientY - clientY;
         const w = clientX - dix - recordX;
         const h = clientY - diy - recordY;
+        let _w = w
+        let _h = h
+        if(clientX < e.clientX){
+          _w = squareWidth + deltaX
+          _w = _w > maxWidth1 ? maxWidth1 : _w
+          // left
+          recordX = clientX - dix
+          recordX = recordX < 0 ? 0 : recordX
+        } else{
+          _w = w > maxWidth ? maxWidth : w
+        }
+        if(clientY < e.clientY){
+           _h = squareHeight + deltaY
+           _h = _h > maxHeight1 ? maxHeight1 : _h
+           // top
+          recordY = clientY - diy
+          recordY = recordY < 0 ? 0 : recordY
+        } else{
+          _h = h > maxHeight? maxHeight: h
+        }
+
         square.style.left = recordX + "px";
         square.style.top = recordY + "px";
-        square.style.width = w + "px";
-        square.style.height = h + "px";
-        width = w
-        height = h
+        square.style.width = _w + "px";
+        square.style.height = _h + "px";
+        width = _w
+        height = _h
       };
       document.onmouseup = (e) => {
-        square && this.canvas.removeChild(square);
-        if(width> 16 && height > 16){
-          this.addHotArea({
-            x: recordX + 'px',
-            y: recordY+ 'px',
-            w: width+ 'px',
-            h: height+ 'px',
-          },true)
+        square && this.canvas?.removeChild(square);
+        const creat= ()=> this.addHotArea({
+          x: recordX + 'px',
+          y: recordY+ 'px',
+          w: width+ 'px',
+          h: height+ 'px',
+        },true)
+        if(width> 16 && height > 16 && this.options?.manualAdd?.(creat)){
+          creat()
         }
         document.onmousemove = null;
         document.onmouseup = null;
@@ -892,3 +923,5 @@ class ImageHotSpot {
     );
   }
 }
+
+window.ImageHotSpot = ImageHotSpot
