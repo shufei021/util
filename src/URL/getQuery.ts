@@ -7,17 +7,12 @@
 export function getQuery(link: string = window.location.href):object {
     try {
         const params:{[key: string]: string} = {};
-        const url = new URL(link);
-
-        // 使用URLSearchParams的forEach方法来遍历所有的键值对
-        for (const [key, value] of new URLSearchParams(url.search).entries()) {
-            params[decodeURIComponent(key)] = decodeURIComponent(value);
+        const map = Object.fromEntries(new URLSearchParams(window.location.search).entries())
+        for (const key in map) {
+            params[key] = decodeURIComponent(map[key]);
         }
-
         return params;
     } catch (e) {
-        // 如果解析URL出现异常，则调用回退解析函数
-        console.error('Error parsing URL:', e);
         try {
             return link.includes('?') ?
                 link

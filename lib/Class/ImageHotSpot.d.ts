@@ -32,6 +32,7 @@ interface SquarePos {
     h?: string;
 }
 interface ImgHotOptions {
+    upperLimit: string | number;
     el: string | HTMLElement;
     customUpload?: boolean;
     addMode?: 'default' | 'manual';
@@ -39,14 +40,15 @@ interface ImgHotOptions {
     handle?: HandleOptions;
     style?: StyleOptions;
     squarePos?: SquarePos;
-    beforeAdd?: () => void;
+    beforeAdd?: (is: boolean) => void;
     afterAdd(arg0: {
-        index: number;
+        seq: number;
         square: HTMLElement;
     }): unknown;
     beforeDel?: (index: number, element: HTMLElement, callback: () => void) => void;
     overlapCallback?: (isOverlapping: boolean) => void;
-    manualAdd?: (create: Function) => void;
+    manualAdd?: (create: Function) => boolean;
+    afterInit(): () => void;
 }
 declare class ImageHotSpot {
     private options;
@@ -65,6 +67,7 @@ declare class ImageHotSpot {
     initSquarePos(): void;
     resetInit(): void;
     generateContainer(): void;
+    isNum(n: string | number): boolean;
     addHotArea({ x, y, w, h }: {
         x?: any;
         y?: any;
@@ -86,7 +89,7 @@ declare class ImageHotSpot {
     delHotArea(el: {
         closest: (arg0: string) => any;
     }): void;
-    resetHotSeq(idx: number): void;
+    resetHotSeq(seq: number): void;
     handleMouseDown(e: MouseEvent): void;
     startDrag(e: {
         clientX: any;
@@ -161,6 +164,8 @@ declare class ImageHotSpot {
             scale: number;
         }): void;
     }): void;
+    hasBackgroundImage(): boolean;
+    delImage(): void;
     destroy(): void;
     getMaxZIndex(): number;
     /***
