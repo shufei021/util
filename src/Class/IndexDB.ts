@@ -1,4 +1,3 @@
-
 // 操作类型枚举
 enum OperationType {
     ADD = 1,
@@ -9,22 +8,22 @@ enum OperationType {
     CURSOR = 6,
     REFRESH = 7
 }
+
 // 构造函数参数接口
 interface IndexDBProps {
-    dbName: string, // 数据库名称
-    dbVersion: number, // 数据库版本
-    storeName: string, // 存储空间名称
-    indexName: string, // 数据库索引名称
-    keyPath: string, // 数据库索引键名
-    indexes?: IndexConfig[], // 改为数组，支持多个索引
-    handleVersionUpgrade?:Function // 数据库版本升级处理函数
+    dbName: string;
+    dbVersion: number;
+    storeName: string;
+    keyPath: string | string[];
+    indexes?: IndexConfig[];
+    handleVersionUpgrade?: (db: IDBDatabase, oldVersion: number, newVersion: number, transaction: IDBTransaction) => void;
 }
+
 // 操作参数接口
 interface ActionOptions {
-    type?: OperationType,
-    dbName?: string,
-    data?: any,
-    keyPath?: string,
+    type?: OperationType;
+    data?: any;
+    key?: IDBValidKey;
     cb?: (cursor: IDBCursorWithValue) => void;
 }
 
@@ -40,7 +39,7 @@ class IndexDBError extends Error {
 interface IndexConfig {
     name: string;
     keyPath: string | string[];
-    options?: IDBIndexParameters;  // { unique?: boolean, multiEntry?: boolean }
+    options?: IDBIndexParameters;
 }
 
 class IndexDB {
@@ -48,28 +47,24 @@ class IndexDB {
     private dbVersion: number;
     private storeName: string;
     private indexes: IndexConfig[];
-    private keyPath: string;
+    private keyPath: string | string[];
     private db: IDBDatabase | null;
     private readonly connectionTimeout: number = 5000;
     private readonly retryAttempts: number = 3;
-    private handleVersionUpgrade: Function | undefined;
+    private handleVersionUpgrade?: (db: IDBDatabase, oldVersion: number, newVersion: number, transaction: IDBTransaction) => void;
     private cache = new Map<string, any>();
     private listeners = new Map<string, Set<Function>>();
-    constructor({ dbName, dbVersion, storeName, keyPath, indexes = [],handleVersionUpgrade }: IndexDBProps) {
-        // 数据库名称
+
+    constructor({ dbName, dbVersion, storeName, keyPath, indexes = [], handleVersionUpgrade }: IndexDBProps) {
         this.dbName = dbName;
-        // 数据库版本
         this.dbVersion = dbVersion;
-        // 存储空间名称
         this.storeName = storeName;
-        // 索引数组
         this.indexes = indexes;
-        this.keyPath = keyPath
-        this.db = null
-        this.handleVersionUpgrade = handleVersionUpgrade
-        this.ensureConnection()
+        this.keyPath = keyPath;
+        this.db = null;
+        this.handleVersionUpgrade = handleVersionUpgrade;
+        this.ensureConnection();
     }
-    
 
     public on(event: string, callback: Function): void {
         if (!this.listeners.has(event)) {
@@ -90,20 +85,19 @@ class IndexDB {
         this.cache.set(key, value);
         return value;
     }
-     // 确保数据库连接
-     private async ensureConnection(): Promise<IDBDatabase> {
+    
+    private async ensureConnection(): Promise<IDBDatabase> {
         if (!this.db) this.db = await this.connectWithRetry();
         return this.db;
     }
 
-     // 带重试的连接
-     private async connectWithRetry(attempts: number = 0): Promise<IDBDatabase> {
+    private async connectWithRetry(attempts: number = 0): Promise<IDBDatabase> {
         try {
             return (await Promise.race([
                 this.open(),
-                new Promise((_, reject) => 
-                    setTimeout(() => reject(new Error('Connection timeout')), 
-                    this.connectionTimeout)
+                new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error('Connection timeout')),
+                        this.connectionTimeout)
                 )
             ])) as IDBDatabase;
         } catch (error) {
@@ -115,7 +109,6 @@ class IndexDB {
         }
     }
 
-    // 事务包装器
     private async withTransaction<T>(
         mode: IDBTransactionMode,
         callback: (store: IDBObjectStore) => Promise<T>
@@ -123,138 +116,186 @@ class IndexDB {
         const db = await this.ensureConnection();
         const transaction = db.transaction([this.storeName], mode);
         const store = transaction.objectStore(this.storeName);
-
-        return new Promise((resolve, reject) => {
-            const result = callback(store);
+        
+        return new Promise(async (resolve, reject) => {
             transaction.oncomplete = () => resolve(result);
             transaction.onerror = () => reject(transaction.error);
-            transaction.onabort = () => reject(transaction.error);
+            
+            let result: T;
+            try {
+                result = await callback(store);
+            } catch (error) {
+                reject(error);
+            }
         });
     }
 
-    // 核心操作方法
-    public async action(options: ActionOptions = {}): Promise<any> {
-        const { 
-            type = OperationType.ADD, 
-            dbName = this.dbName, 
-            data = {}, 
-            keyPath = this.keyPath, 
-            cb = () => {} 
-        } = options;
-        try {
-            // 根据操作类型执行相应的方法
-            const mode = type === OperationType.GET ? 'readonly' : 'readwrite';
-            
-            return await this.withTransaction(mode, async (store) => {
-                switch (type) {
-                    case OperationType.ADD:
-                        return store.add(data);
-                    
-                    case OperationType.GET:
-                        return new Promise((resolve) => {
-                            const request = store.get(keyPath);
-                            request.onsuccess = () => resolve(request.result);
-                        });
-                    
-                    case OperationType.DELETE:
-                        return store.delete(keyPath);
-                    
-                    case OperationType.UPDATE:
-                        return store.put(data);
-                    
-                    case OperationType.CLEAR:
-                        return store.clear();
-                    
-                    case OperationType.CURSOR:
-                        return new Promise((resolve) => {
-                            const request = store.openCursor();
-                            request.onsuccess = (event: Event) => {
-                                const cursor = (event.target as any).result;
-                                if (cursor) {
-                                    cb(cursor);
-                                    cursor.continue();
-                                }
-                                resolve(true);
-                            };
-                        });
-                    
-                    case OperationType.REFRESH:
-                        this.db?.close();
-                        this.db = await this.open(dbName);
-                        return this.db;
-                    
-                    default:
-                        throw new IndexDBError('Invalid operation type', 400);
-                }
-            });
-        } catch (error:any) {
-            console.error('IndexDB operation failed:', error);
-            throw new IndexDBError(
-                error.message || 'Operation failed',
-                error.code || 500
-            );
-        }
-    }
-
-    // 打开数据库
-    public open(dbName = this.dbName, dbVersion = this.dbVersion, keyPath = this.keyPath): Promise<IDBDatabase> {
+    public open(): Promise<IDBDatabase> {
         return new Promise((resolve, reject) => {
-            const request = window.indexedDB.open(dbName, dbVersion); // 第一个参数是数据库名称，第二个参数是版本号
-            request.onerror =  (event:Event)=> {
-                const error = (event.target as any).error;
-                reject(new IndexDBError('Failed to open database', error?.code || 500))
+            const request = window.indexedDB.open(this.dbName, this.dbVersion);
+            request.onerror = (event: Event) => {
+                const error = (event.target as IDBOpenDBRequest).error;
+                reject(new IndexDBError('Failed to open database', error?.code || 500));
             };
-            request.onsuccess =  (event:Event)=> {
-                const db = (event.target as any).result;
+            request.onsuccess = (event: Event) => {
+                const db = (event.target as IDBOpenDBRequest).result;
                 this.db = db;
-                // 数据库打开成功后的操作
-                resolve(db)
-
+                resolve(db);
             };
-            // 添加 onblocked 处理
             request.onblocked = (event: Event) => {
                 console.warn('Database upgrade blocked. Please close other tabs/windows.');
                 reject(new IndexDBError('Database upgrade blocked', 409));
             };
-            // onupgradeneeded 只在版本号增加时触发
             request.onupgradeneeded = (event: IDBVersionChangeEvent) => {
-                const db = (event.target as any).result;
-                const oldVersion = event.oldVersion;  // 获取旧版本号
+                const db = (event.target as IDBOpenDBRequest).result;
+                const oldVersion = event.oldVersion;
+                const newVersion = event.newVersion || this.dbVersion;
+                const transaction = (event.target as IDBOpenDBRequest).transaction; // 获取事务对象
+            
                 try {
-                    // 只创建一次存储空间，使用 storeName
+                    let store: IDBObjectStore;
                     if (!db.objectStoreNames.contains(this.storeName)) {
-                        const store = db.createObjectStore(this.storeName, { keyPath });
-                        
-                        // 创建索引
-                        this.indexes.forEach(({ name, keyPath: indexKeyPath, options = {} }) => {
-                            if (!store.indexNames.contains(name)) {
+                        store = db.createObjectStore(this.storeName, { keyPath: this.keyPath });
+                    } else {
+                        store = transaction!.objectStore(this.storeName);
+                    }
+            
+                    this.indexes.forEach(({ name, keyPath: indexKeyPath, options = {} }) => {
+                        if (!store.indexNames.contains(name)) {
+                            store.createIndex(name, indexKeyPath, options);
+                        } else {
+                            // 处理已存在索引的更新逻辑
+                            const existingIndex = store.index(name);
+                            if (existingIndex.keyPath !== indexKeyPath || 
+                                existingIndex.unique !== options.unique ||
+                                existingIndex.multiEntry !== options.multiEntry) {
+                                store.deleteIndex(name);
                                 store.createIndex(name, indexKeyPath, options);
                             }
-                        });
-                        // 版本升级时的处理
-                        if (oldVersion < dbVersion && this.handleVersionUpgrade)  {
-                            this.handleVersionUpgrade(db, oldVersion, dbVersion);
                         }
+                    });
+            
+                    if (this.handleVersionUpgrade) {
+                        // 传递所有必要参数（关键修正）
+                        this.handleVersionUpgrade(db, oldVersion, newVersion, transaction!);
                     }
-                    resolve(db)
                 } catch (error) {
                     console.error('Database upgrade failed:', error);
                     reject(new IndexDBError('Database upgrade failed', 500));
                 }
             };
-        })
+        });
     }
+
+    public async action(options: ActionOptions = {}): Promise<any> {
+        const { type = OperationType.ADD, data = {}, key, cb = () => {} } = options;
+        try {
+            const mode = type === OperationType.GET ? 'readonly' : 'readwrite';
+
+            return await this.withTransaction(mode, async (store) => {
+                switch (type) {
+                    case OperationType.ADD:
+                        return new Promise((resolve, reject) => {
+                            const request = store.add(data);
+                            request.onsuccess = () => {
+                                const itemKey = Array.isArray(this.keyPath)
+                                    ? this.keyPath.map(k => data[k]).join('|')
+                                    : data[this.keyPath];
+                                this.cache.set(itemKey, data);
+                                this.emit('add', data);
+                                resolve(request.result);
+                            };
+                            request.onerror = () => reject(request.error);
+                        });
+
+                    case OperationType.GET:
+                        return new Promise((resolve, reject) => {
+                            const request = store.get(key!);
+                            request.onsuccess = () => {
+                                const itemKey = String(key);
+                                this.cache.set(itemKey, request.result);
+                                resolve(request.result);
+                            };
+                            request.onerror = () => reject(request.error);
+                        });
+
+                    case OperationType.DELETE:
+                        return new Promise((resolve, reject) => {
+                            const request = store.delete(key!);
+                            request.onsuccess = () => {
+                                this.cache.delete(String(key));
+                                this.emit('delete', key);
+                                resolve(undefined);
+                            };
+                            request.onerror = () => reject(request.error);
+                        });
+
+                    case OperationType.UPDATE:
+                        return new Promise((resolve, reject) => {
+                            const request = store.put(data);
+                            request.onsuccess = () => {
+                                const itemKey = Array.isArray(this.keyPath)
+                                    ? this.keyPath.map(k => data[k]).join('|')
+                                    : data[this.keyPath];
+                                this.cache.set(itemKey, data);
+                                this.emit('update', data);
+                                resolve(request.result);
+                            };
+                            request.onerror = () => reject(request.error);
+                        });
+
+                    case OperationType.CLEAR:
+                        return new Promise((resolve, reject) => {
+                            const request = store.clear();
+                            request.onsuccess = () => {
+                                this.cache.clear();
+                                this.emit('clear');
+                                resolve(undefined);
+                            };
+                            request.onerror = () => reject(request.error);
+                        });
+
+                    case OperationType.CURSOR:
+                        return new Promise((resolve, reject) => {
+                            const request = store.openCursor();
+                            request.onsuccess = (event) => {
+                                const cursor = (event.target as IDBRequest<IDBCursorWithValue>).result;
+                                if (cursor) {
+                                    cb(cursor);
+                                    cursor.continue();
+                                } else {
+                                    resolve(undefined);
+                                }
+                            };
+                            request.onerror = () => reject(request.error);
+                        });
+
+                    case OperationType.REFRESH:
+                        this.closeConnection();
+                        this.db = await this.open();
+                        return this.db;
+
+                    default:
+                        throw new IndexDBError('Invalid operation type', 400);
+                }
+            });
+        } catch (error: any) {
+            console.error('IndexDB operation failed:', error);
+            throw new IndexDBError(error.message || 'Operation failed', error.code || 500);
+        }
+    }
+
     // 添加数据 1
     public add(data:any): Promise<any> {
         return this.action({ type: OperationType.ADD, data })
     }
     // 获取数据 2
-    public get(keyPath:string): Promise<any> {
-        return this.action({ type: OperationType.GET, keyPath })
+    public get(key: IDBValidKey): Promise<any> {
+        return this.action({ type: OperationType.GET, key })
     }
     // 删除数据 3
-    public del(keyPath:string): Promise<void> {
-        return this.action({ type: OperationType.DELETE, keyPath })
+    public del(key: IDBValidKey): Promise<void> {
+        return this.action({ type: OperationType.DELETE, key })
     }
     // 更新数据 4
     public put(data:any): Promise<void>  {
@@ -280,7 +321,13 @@ class IndexDB {
     // 批量操作方法
     public async bulkAdd(items: any[]): Promise<void> {
         await this.withTransaction('readwrite', async (store) => {
-            items.forEach(item => store.add(item));
+            await Promise.all(items.map(item => 
+                new Promise((resolve, reject) => {
+                    const request = store.add(item);
+                    request.onsuccess = () => resolve(request.result);
+                    request.onerror = () => reject(request.error);
+                })
+            ));
         });
     }
 
@@ -364,35 +411,43 @@ class IndexDB {
      * @param storeName 要删除的表名
      */
      public async deleteStore(storeName: string): Promise<void> {
-        // 增加版本号
-        this.dbVersion += 1;
-        
+        // 重要：关闭现有连接
+        this.closeConnection();
+         // 获取当前数据库版本
+        const currentVersion = await this.getCurrentDBVersion();
+        const newVersion = currentVersion + 1;
         return new Promise((resolve, reject) => {
             // 关闭现有连接
             this.closeConnection();
             
-            const request = window.indexedDB.open(this.dbName, this.dbVersion);
+            const request = window.indexedDB.open(this.dbName, newVersion);
 
-            request.onupgradeneeded = (event: Event) => {
-                const db = (event.target as any).result;
-                try {
-                    // 检查表是否存在
-                    if (db.objectStoreNames.contains(storeName)) {
-                        db.deleteObjectStore(storeName);
-                    }
-                } catch (error) {
-                    console.error('Failed to delete store:', error);
-                    reject(new IndexDBError('Failed to delete store', 500));
+           request.onupgradeneeded = (event: IDBVersionChangeEvent) => {
+                const db = (event.target as IDBOpenDBRequest).result;
+                if (db.objectStoreNames.contains(storeName)) {
+                    db.deleteObjectStore(storeName);
                 }
             };
 
-            request.onsuccess = () => {
+            request.onsuccess = (event) => {
+                // 正确获取数据库实例
+                const db = (event.target as IDBOpenDBRequest).result;
+                db.close(); // 关闭新连接
                 resolve();
             };
 
-            request.onerror = (event: Event) => {
-                const error = (event.target as any).error;
-                reject(new IndexDBError('Failed to delete store', error?.code || 500));
+            request.onerror = () => reject(new Error('删除失败'));
+        });
+    }
+    // 获取数据库当前版本
+    private async getCurrentDBVersion(): Promise<number> {
+        return new Promise((resolve) => {
+            const request = indexedDB.open(this.dbName);
+            request.onsuccess = () => {
+                const db = request.result;
+                const version = db.version;
+                db.close();
+                resolve(version);
             };
         });
     }

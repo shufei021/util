@@ -1,346 +1,586 @@
 <!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Drag and Drop Example</title>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>IndexDB 完整测试</title>
     <style>
-      :root {
-        --primary-color: #378efb;
-        --secondary-color: #7b38f4;
-        --border-color: #ccc;
-        --text-color: #333;
-        --text-secondary: #999;
-        --bg-hot-area: rgba(20, 71, 255, 0.2);
-      }
-
-      * {
-        box-sizing: border-box;
-        margin: 0;
-        padding: 0;
-      }
-
-      html,
-      body {
-        height: 100%;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-          Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
-      }
-
-      body {
-        padding: 2rem;
-        display: flex;
-        flex-direction: column;
-        gap: 2rem;
-        background-color: #f5f5f5;
-      }
-
-      .section-title {
-        font-size: 1.75rem;
-        color: var(--text-color);
-        margin-bottom: 0.5rem;
-      }
-
-      .section-subtitle {
-        font-size: 1rem;
-        color: var(--text-secondary);
-      }
-
-      .editor {
-        display: flex;
-        gap: 2rem;
-        background: white;
-        padding: 1.5rem;
-        border-radius: 8px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-      }
-
-      .container {
-        width: 400px;
-        height: 400px;
-        position: relative;
-        background-color: #f5f5f5;
-        border-radius: 4px;
-      }
-
-      .controls {
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-      }
-
-      .btn {
-        padding: 0.5rem 1rem;
-        border: none;
-        border-radius: 4px;
-        background: var(--primary-color);
-        color: white;
-        cursor: pointer;
-        transition: all 0.3s ease;
-      }
-
-      .btn:hover {
-        background: #2670d8;
-      }
-
-      .btn-secondary {
-        background: #f0f0f0;
-        color: var(--text-color);
-      }
-
-      .btn-secondary:hover {
-        background: #e0e0e0;
-      }
-
-      .hot-areas-list {
-        margin-top: 1rem;
-        padding-left: 1.5rem;
-      }
-
-      .hot-areas-list li {
-        margin-bottom: 0.5rem;
-      }
-
-      .hot-areas-list input {
-        padding: 0.5rem;
-        border: 1px solid var(--border-color);
-        border-radius: 4px;
-        width: 100%;
-      }
-
-      .preview-container {
-        background: white;
-        padding: 1.5rem;
-        border-radius: 8px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-      }
-
-      .img-container {
-        position: relative;
-        display: inline-block;
-        min-width: 100px;
-        max-width: 325px;
-        margin: 1rem auto;
-      }
-
-      .hot-square {
-        background-color: var(--bg-hot-area);
-        border: 1px dashed var(--primary-color);
-        position: absolute;
-      }
-
-      .hot-handle {
-        width: 8px;
-        height: 8px;
-        background-color: var(--primary-color);
-        position: absolute;
-        border-radius: 50%;
-      }
-
-      .hot-view {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        font-size: 0.875rem;
-        text-align: center;
-        transition: opacity 0.3s ease;
-        background-color: rgba(0, 0, 0, 0.2);
-      }
-
-      .hot-view:hover {
-        background-color: rgba(0, 0, 0, 0.5);
-      }
-
-      #file {
-        display: none;
-      }
-    </style>
-  </head>
-
-  <body>
-    <div class="editor-section">
-      <h2 class="section-title">
-        编辑区
-        <span class="section-subtitle">保存配置后可在下方预览区查看</span>
-        <span
-          class="section-subtitle overlap-tip"
-          style="color: #d81e06; display: none"
-          >热区之间不能重叠</span
-        >
-      </h2>
-      <div class="editor">
-        <div class="container"></div>
-        <div class="controls">
-          <button id="upload" class="btn">上传热区图片</button>
-          <input id="file" type="file" accept="image/*" />
-          <button id="btn" class="btn">添加热区</button>
-          <button id="del" class="btn btn-secondary">删除热区图片</button>
-          <button id="save" class="btn">保存配置</button>
-          <ol id="ol" class="hot-areas-list"></ol>
-        </div>
-      </div>
-    </div>
-
-    <div class="preview-section">
-      <h2 class="section-title">
-        预览区 <span class="section-subtitle">点击热区可查看关联内容</span>
-      </h2>
-      <div class="preview-container">
-        <div class="img-container">
-          <img
-            id="img"
-            style="display: none; width: 100%; height: 100%"
-            alt="预览图"
-          />
-        </div>
-        <span class="info"></span>
-      </div>
-    </div>
-  </body>
-  <script src="../lib/index.umd.js"></script>
-  <!-- <script src="./ImageHotSpot .js"></script> -->
-  
-  <script>
-    const imgHot = new rutils.ImageHotSpot({
-      el: ".container",
-      customUpload: true,
-      addMode:'manual',
-      scaleMode: "auto", // 上传的热区图片缩放模式 auto 自适应 enlarge 放大
-      manualAdd:(creat)=>{
-       return true
-      },
-      beforeDel: (index, square, delFunc) => {
-        square?.data?.remove();
-        delFunc();
-      },
-      beforeAdd: () => {
-        alert("请先传入热区图片，再添加热区");
-      },
-      afterAdd({index, square }){
-        const li = document.createElement("li");
-          square.data = li;
-          li.innerHTML = `<input type="text" placeholder="请输入关联内容">`;
-          document.querySelector("#ol").appendChild(li);
-          dataMap[index] = () => li.querySelector("input").value;
-      },
-      overlapCallback(isOverlap) {
-        document.querySelector(".overlap-tip").style.display = isOverlap
-          ? ""
-          : "none";
-      },
-      style:{
-        seq:{
-          style:{
-            color:'black',
-            backgroundColor:'#fff',
-            left:'50%',
-            top:'50%',
-            transform:'translate(-50%,-50%)'
-          }
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .test-section { margin: 10px 0; padding: 15px; border: 1px solid #ddd; }
+        button { margin: 5px; padding: 8px 15px; cursor: pointer; }
+        .log { 
+            margin-top: 20px; 
+            padding: 10px;
+            background: #f5f5f5;
+            max-height: 500px;
+            overflow-y: auto;
         }
-      },
-      squarePos:{
-        // w:'200px',
-        // h:'200px'
-      }
-    });
+        .success { color: green; }
+        .error { color: red; }
+        .status { margin-left: 10px; }
+        /* 添加表格样式 */
+        .data-table-container {
+            margin-top: 20px;
+            overflow-x: auto;
+        }
+        h2 {
+            margin: 0;
+        }
+        #dataTable {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+        }
 
-    function fileToBase64(file) {
-      return new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = function () {
-          resolve(this.result);
-        };
-      });
+        #dataTable th, 
+        #dataTable td {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+
+        #dataTable th {
+            background-color: #f5f5f5;
+        }
+
+        #dataTable tr:hover {
+            background-color: #f9f9f9;
+        }
+
+        .action-btn {
+            padding: 4px 8px;
+            margin: 0 2px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>IndexDB 功能测试</h1>
+        
+        <!-- 测试控制 -->
+        <div class="test-section">
+            <h2>基础操作</h2>
+            <button data-type="1">1. 初始化数据库</button>
+            <button data-type="2">2. 添加测试数据</button>
+            <button data-type="3">3. 查询数据</button>
+            <button data-type="4">4. 更新数据</button>
+            <button data-type="5">5. 删除数据</button>
+            <button data-type="6">6. 清空数据</button>
+            <button data-type="7">7. 游标遍历</button>
+        </div>
+
+        <div class="test-section">
+            <h2>高级功能</h2>
+            <button data-type="8">8. 批量添加(100条)</button>
+            <button data-type="9">9. 索引查询</button>
+            <button data-type="10">10. 范围查询</button>
+            <button data-type="11">11. 事件监听测试</button>
+            <button data-type="12">12. 连接恢复测试</button>
+            <button data-type="13">13. 删除存储空间</button>
+        </div>
+
+        <div class="test-section">
+            <h2>压力测试</h2>
+            <button data-type="14">14. 插入1000条数据</button>
+            <button data-type="15">15. 插入10000条数据</button>
+            <button data-type="16">16. 并发操作测试</button>
+        </div>
+
+        <div class="test-section">
+            <h2>测试结果</h2>
+            <div id="result"></div>
+            <div class="log" id="log"></div>
+        </div>
+        <div class="test-section">
+            <h2>数据展示</h2>
+            <div class="data-table-container">
+                <table id="dataTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>姓名</th>
+                            <th>年龄</th>
+                            <th>邮箱</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+<script src="../lib/index.umd.js"></script>    
+<script>
+    let db;
+    let currentVersion = 1; // 跟踪当前版本
+    const TEST_STORE = 'users';
+    const TEST_DB_NAME = 'TestDB';
+    
+    // 初始化数据库
+    function initDB() {
+        return new Promise(async (resolve, reject) => {
+            // 动态获取当前版本
+            const version = await getCurrentDBVersion(TEST_DB_NAME);
+            currentVersion = Math.max(version, currentVersion) + 1;
+            const ret = rutils.indexdb({
+                dbName: TEST_DB_NAME,
+                dbVersion: currentVersion,
+                storeName: TEST_STORE,
+                keyPath: 'id',
+                indexes: [
+                    { 
+                        name: 'age_index', 
+                        keyPath: 'age',
+                        options: { unique: false }
+                    },
+                    {
+                        name: 'name_age',
+                        keyPath: ['name', 'age']
+                    }
+                ],
+                handleVersionUpgrade: (db, oldVersion, newVersion, transaction) => {
+                    console.log(`数据库升级: v${oldVersion} → v${newVersion}`);
+                    if (!db.objectStoreNames.contains(TEST_STORE)) {
+                        const store = db.createObjectStore(TEST_STORE, {
+                            keyPath: 'id',
+                            autoIncrement: true
+                        });
+                        store.createIndex('age_index', 'age', { unique: false });
+                    }
+                }
+            });
+            resolve(ret);
+        })
     }
 
-    const dataMap = {};
+    // 日志记录
+    function log(message, isSuccess = true) {
+        const logDiv = document.getElementById('log');
+        const statusDiv = document.getElementById('result');
+        
+        const logEntry = document.createElement('div');
+        logEntry.innerHTML = `[${new Date().toLocaleTimeString()}] ${message}`;
+        logEntry.className = isSuccess ? 'success' : 'error';
+        
+        statusDiv.innerHTML = message;
+        statusDiv.className = isSuccess ? 'success' : 'error';
+        logDiv.prepend(logEntry);
+    }
 
-    let sizeInfo = { w: 0, h: 0 };
 
-    // 上传热区图片
-    document.querySelector("#upload").onclick = () => {
-      document.querySelector("#file").click();
-    };
+    // 在初始化成功后自动加载数据
+    async function testInit() {
+        try {
+            db =await initDB();
+            await db.open();
+            await updateDataTable(); // 新增
+            log('数据库初始化成功');
+        } catch (e) {
+            log(`初始化失败: ${e.message}`, false);
+        }
+    }
 
-    // 热区图片回显
-    document.querySelector("#file").onchange = function (e) {
-      fileToBase64(e.target.files[0]).then((res) => {
-        console.log('%c [ res ]-267', 'font-size:13px; background:pink; color:#bf2c9f;', res)
-        imgHot.uploadHotImg(res).then(({ w, h }) => {
-          console.log('%c [ uploadHotImg ]-255', 'font-size:13px; background:pink; color:#bf2c9f;')
-          sizeInfo = {
-            w,
-            h,
-          };
+    async function testAdd() {
+        try {
+            const data = {
+                name: `用户_${Math.floor(Math.random() * 100)}`,
+                age: Math.floor(Math.random() * 50) + 18,
+                email: `test${Date.now()}@example.com`,
+                id: guid()
+            };
+            
+            const key = await db.add(data);
+            await updateDataTable(); // 新增
+            log(`添加成功，主键: ${key}`);
+        } catch (e) {
+            log(`添加失败: ${e.message}`, false);
+        }
+    }
+
+    async function testGet() {
+        try {
+            const all = await db.rangeQuery('age_index', { start: 20, end: 30 });
+            const key = all[0]?.id;
+            if (!key) return log('没有可查询的数据');
+            
+            const data = await db.get(key);
+            log(`查询结果: ${JSON.stringify(data)}`);
+        } catch (e) {
+            log(`查询失败: ${e.message}`, false);
+        }
+    }
+
+    async function testUpdate() {
+        try {
+            const all = await db.rangeQuery('age_index', { start: 20 });
+            const item = all[0];
+            if (!item) return log('没有可更新的数据');
+            
+            item.age += 1;
+            await db.put(item);
+            log(`更新成功，新年龄: ${item.age}`);
+        } catch (e) {
+            log(`更新失败: ${e.message}`, false);
+        }
+    }
+
+    async function testDelete() {
+        try {
+            const all = await db.rangeQuery('age_index', { start: 0 });
+            const key = all[0]?.id;
+            if (!key) return log('没有可删除的数据');
+            
+            await db.del(key);
+            log(`删除成功，主键: ${key}`);
+        } catch (e) {
+            log(`删除失败: ${e.message}`, false);
+        }
+    }
+
+    async function testClear() {
+        try {
+            await db.clear();
+            await updateDataTable(); // 新增
+            log('数据清空成功');
+        } catch (e) {
+            log(`清空失败: ${e.message}`, false);
+        }
+    }
+
+    async function testCursor() {
+        try {
+            let count = 0;
+            await db.each(cursor => {
+                count++;
+                console.log('游标数据:', cursor.value);
+            });
+            log(`游标遍历完成，共 ${count} 条数据`);
+        } catch (e) {
+            log(`游标失败: ${e.message}`, false);
+        }
+    }
+
+    async function testBulkAdd() {
+        try {
+            const items = Array.from({ length: 100 }, (_, i) => ({
+                name: `批量用户_${i}`,
+                age: 20 + (i % 30),
+                email: `batch${i}@test.com`,
+                id: guid()
+            }));
+            
+            await db.bulkAdd(items);
+            log(`批量添加成功，共 ${items.length} 条`);
+        } catch (e) {
+            log(`批量添加失败: ${e.message}`, false);
+        }
+    }
+
+    async function testIndexQuery() {
+        try {
+            const results = await db.getByIndex('age_index', 25);
+            log(`年龄25岁的用户数: ${results.length}`);
+            console.table(results)
+        } catch (e) {
+            log(`索引查询失败: ${e.message}`, false);
+        }
+    }
+
+    async function testRangeQuery() {
+        try {
+            const results = await db.rangeQuery(
+                'age_index', 
+                IDBKeyRange.bound(20, 30, false, false),
+                'prev'
+            );
+            log(`年龄20-30岁用户: ${results.length} 条`);
+        } catch (e) {
+            log(`范围查询失败: ${e.message}`, false);
+        }
+    }
+
+    async function testEvents() {
+        try {
+            db.on('add', data => {
+                console.log('监听到添加事件:', data);
+            });
+            
+            await db.add({
+                name: '事件测试用户',
+                age: 99,
+                email: 'event@test.com',
+                id: guid()
+            });
+            
+            log('事件监听测试完成，请查看控制台');
+        } catch (e) {
+            log(`事件测试失败: ${e.message}`, false);
+        }
+    }
+
+    async function testConnection() {
+        try {
+            await db.refresh();
+            log('连接刷新成功');
+        } catch (e) {
+            log(`连接刷新失败: ${e.message}`, false);
+        }
+    }
+
+    async function testDeleteStore() {
+        try {
+            await db.deleteStore(TEST_STORE);
+            await updateDataTable(); // 添加在成功回调中
+            log('存储空间删除成功，请重新初始化数据库');
+        } catch (e) {
+            log(`删除失败: ${e.message}`, false);
+        }
+    }
+
+    // 性能测试
+    async function testPerformance(count) {
+        try {
+            const items = Array.from({ length: count }, (_, i) => ({
+                name: `压力测试用户_${i}`,
+                age: i % 100,
+                email: `stress${i}@test.com`,
+                id: guid()
+            }));
+            
+            const start = performance.now();
+            await db.bulkAdd(items);
+            const duration = performance.now() - start;
+            
+            log(`插入${count}条数据耗时: ${duration.toFixed(2)}ms`);
+        } catch (e) {
+            log(`性能测试失败: ${e.message}`, false);
+        }
+    }
+
+    // 并发测试
+    async function testConcurrent() {
+        try {
+            const promises = [
+                db.add({ name: '并发用户1', age: 10 ,id: guid()}),
+                db.add({ name: '并发用户2', age: 20 ,id: guid() }),
+                db.get(1),
+                db.rangeQuery('age_index', { start: 15 })
+            ];
+            
+            const results = await Promise.all(promises);
+            log(`并发测试完成，结果数: ${results.length}`);
+        } catch (e) {
+            log(`并发测试失败: ${e.message}`, false);
+        }
+    }
+
+    function guid() {
+        return Array.from(
+            { length: 8 }, // 创建包含 8 个元素的数组，每个元素用于生成 4 位的十六进制字符串
+            (_, i) => (
+                (((1 + Math.random()) * 0x10000) | 0) // 生成一个随机数，乘以 0x10000 并向下取整，得到一个 0 到 0xffff 之间的整数
+                    .toString(16) // 将整数转换为十六进制字符串
+                    .substring(1) // 截取字符串，保留从第二位开始的字符
+                + ([1, 2, 3, 4].includes(i) ? '-' : '') // 在第 2、4、6、8 位插入短横线
+            )
+        ).join(''); // 将数组中的元素连接成一个字符串，得到最终的 GUID 字符串
+    }
+    
+    // 辅助函数：获取数据库当前版本
+    function getCurrentDBVersion(dbName) {
+        return new Promise((resolve) => {
+            const request = indexedDB.open(dbName);
+            request.onsuccess = () => {
+                const db = request.result;
+                const version = db.version;
+                db.close();
+                resolve(version);
+            };
         });
-        document.querySelector("#img").src = res;
-        document.querySelector("#img").style.display = "block";
-      });
-    };
-
-    // 新增热区
-    document.querySelector("#btn").onclick = () => {
-      imgHot
-        .addHotArea()
-        .catch(() => {});
-    };
-
-    // 删除热区图片
-    document.querySelector("#del").onclick = () => {
-      imgHot.destroy();
-      document.querySelector("#img").style.display = "none";
-      document.querySelector("#img").src = "";
-      document
-        .querySelectorAll(".img-container .hot-view")
-        .forEach((i) => i.remove());
-      document.querySelectorAll("#ol li").forEach((i) => i.remove());
-    };
-
-    document.querySelector("#save").onclick = () => {
-      const imgContainer = document.querySelector(".img-container");
-      const img = document.querySelector("#img");
-      const { offsetHeight, offsetWidth } = img;
-      // 获取 所有热区信息
-      const hotSquares = Array.from(
-        document.querySelectorAll(".container .hot-square")
-      );
-      const data = hotSquares.map((i, index) => {
-        const { top, left, width, height } = i.style;
-        return {
-          x: parseInt(left),
-          y: parseInt(top),
-          width: parseInt(width),
-          height: parseInt(height),
-          top: parseInt(top),
-          left: parseInt(left),
-          data: dataMap[index + 1](),
+    }
+    document.querySelector('.container').addEventListener('click', (e) => {
+        const eventMap = {
+            1: testInit,
+            2: testAdd,
+            3: testGet,
+            4: testUpdate,
+            5: testDelete,
+            6: testClear,
+            7: testCursor,
+            8: testBulkAdd,
+            9: testIndexQuery,
+            10: testRangeQuery,
+            11: testEvents,
+            12: testConnection,
+            13: testDeleteStore,
+            14: testPerformance.bind(null, 100),
+            15: testPerformance.bind(null, 200),
+            16: testConcurrent
         };
-      });
+        e.target.dataset.type && eventMap?.[e.target.dataset.type]?.()
+       
+    })
 
-      imgContainer.querySelectorAll(".hot-view").forEach((i) => i.remove());
+    function createElement(tagName) {
+        var args = [];
+        for (var _i = 1; _i < arguments.length; _i++) {
+            args[_i - 1] = arguments[_i];
+        }
+        // 处理参数解析（支持省略props）
+        var props = typeof args[0] === 'object' && !Array.isArray(args[0])
+            ? args.shift()
+            : {};
+        var children = args.flat(Infinity);
+        var element = document.createElement(tagName);
+        if(props.on){
+            for(let eventName in props.on){
+                element[eventName] = props.on[eventName]
+            }
+        }
+        // 新增 cssText 处理逻辑
+        var handleStyleAttributes = function (element, props) {
+            // 先处理 cssText
+            if (props.cssText) {
+                element.style.cssText = props.cssText;
+                Reflect.deleteProperty(props, 'cssText'); // 处理完就删除避免重复处理
+            }
+            // 处理常规 style 属性
+            if (props.style) {
+                if (typeof props.style === 'string') {
+                    element.style.cssText = props.style;
+                }
+                else if (typeof props.style === 'object') {
+                    Object.assign(element.style, props.style);
+                }
+                Reflect.deleteProperty(props, 'style');
+            }
+        };
+        // 在属性处理前先处理样式相关属性
+        handleStyleAttributes(element, props);
+        // 处理属性配置
+        for (var _a = 0, _b = Object.entries(props); _a < _b.length; _a++) {
+            var _c = _b[_a], key = _c[0], value = _c[1];
+            // 处理className
+            if (key === 'className' && typeof value === 'string') {
+                element.className = value;
+                continue;
+            }
+            // 处理htmlFor
+            if (key === 'htmlFor' && typeof value === 'string') {
+                element.setAttribute('for', value);
+                continue;
+            }
+            // 处理事件监听器（onClick等形式）
+            if (/^on[A-Z]/.test(key) && typeof value === 'function') {
+                var eventType = key.slice(2).toLowerCase();
+                ;
+                element.addEventListener(eventType, value);
+                continue;
+            }
+            // 处理style对象
+            if (key === 'style') {
+                if (typeof value === 'object') {
+                    Object.assign(element.style, value);
+                }
+                else if (typeof value === 'string') {
+                    element.style.cssText = value;
+                }
+                continue;
+            }
+            // 处理布尔属性
+            if (typeof value === 'boolean') {
+                value ? element.setAttribute(key, '') : element.removeAttribute(key);
+                continue;
+            }
+            // 默认属性处理
+            element.setAttribute(key, value);
+        }
+        // 处理子节点
+        children = children.flat(Infinity).filter(function (child) {
+            // 过滤无效节点
+            return child !== null && child !== undefined && child !== false;
+        }).map(function (child) {
+            // 转换原始值为文本节点
+            return typeof child === 'string' || typeof child === 'number'
+                    ? document.createTextNode(String(child))
+                    : child;
+            });
+            // 添加子节点
+            children.forEach(function (child) {
+                if (child instanceof Node) {
+                    element.appendChild(child);
+                }
+                else {
+                    console.warn('Invalid child element:', child);
+                }
+            });
+            return element;
+        }
 
-      const scale = offsetWidth / sizeInfo.w;
-      data.forEach((i) => {
-        const div = document.createElement("div");
-        div.className = "hot-view";
-        div.innerHTML = i.data;
-        div.data = i.data;
-        div.style.cssText = `position:absolute; top:${i.top * scale}px; left:${
-          i.left * scale
-        }px; width:${i.width * scale}px; height:${
-          i.height * scale
-        }px; background-color:rgba(20, 71, 255, 0.2);border: 1px solid red;box-sizing:border-box;`;
-        imgContainer.appendChild(div);
-      });
-    };
-    document.querySelector(".img-container").onclick = (e) => {
-      document.querySelector(".info").innerHTML =
-        e.target.className === "hot-view" ? e.target.data : "";
-    };
 
 
-  </script>
+    // 新增函数：动态更新表格数据
+    async function updateDataTable() {
+        try {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '<tr><td colspan="5">加载中...</td></tr>';
+            
+            // 获取所有数据
+            const allData = await db.rangeQuery('age_index', { start: 0 });
+            
+            tbody.innerHTML = ''; // 清空旧数据
+            
+            if (allData.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5">暂无数据</td></tr>';
+                return;
+            }
+
+            // 动态生成表格内容
+            allData.forEach(item => {
+                const tr = createElement('tr',{},[
+                    createElement('td',{}, item.id),
+                    createElement('td',{}, item.name),
+                    createElement('td',{}, item.age),
+                    createElement('td',{}, item.email),
+                    createElement('td',[
+                        createElement('button', { class: 'action-btn',on:{ onclick: deleteRow.bind(null,item.id)} }, '删除'),
+                        createElement('button', { class: 'action-btn', on:{ onclick: editRow.bind(null,item.id)} }, '编辑')
+                    ]),
+                ] )
+                tbody.appendChild(tr);
+            });
+        } catch (e) {
+            console.error('更新表格失败:', e);
+            document.getElementById('tableBody').innerHTML = 
+                '<tr><td colspan="5">数据加载失败</td></tr>';
+        }
+    }
+
+    // 新增：行操作函数
+   async function deleteRow(id) {
+        try {
+            await db.del(id);
+            await updateDataTable(); // 刷新表格
+            log(`已删除ID: ${id}`);
+        } catch (e) {
+            log(`删除失败: ${e.message}`, false);
+        }
+    }
+
+    async function editRow(id) {
+        const data = await db.get(id);
+        const newName = prompt('输入新姓名', data.name);
+        if (newName) {
+            try {
+                await db.put({ ...data, name: newName });
+                await updateDataTable();
+                log(`ID ${id} 更新成功`);
+            } catch (e) {
+                log(`更新失败: ${e.message}`, false);
+            }
+        }
+    }
+</script>
+</body>
 </html>

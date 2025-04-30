@@ -32,6 +32,7 @@ export { formData } from './Dom/formData';
 export { getMaxZIndex } from './Dom/getMaxZIndex';
 export { getScrollDirection } from './Dom/getScrollDirection';
 export { selectTextByElement } from './Dom/selectTextByElement';
+export { truncateTextToFit } from './Dom/truncateTextToFit';
 /**
  * File 对象操作
  */
@@ -101,3 +102,4 @@ export { local } from './Class/Local';
 export { session } from './Class/Session';
 export { num } from './Class/Num';
 export { default as ImageHotSpot } from './Class/ImageHotSpot';
+export { JumpWithParameters } from './Class/JumpWithParameters';

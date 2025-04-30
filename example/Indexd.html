@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>基础CRUD测试</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; }
+        button { margin: 5px; padding: 8px 15px; cursor: pointer; }
+        .data-table { 
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        .data-table th, 
+        .data-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        .data-table th { background-color: #f5f5f5; }
+        .log { 
+            background: #f8f9fa;
+            padding: 10px;
+            margin-top: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+        .loading { color: #6c757d; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>基础CRUD测试（无索引）</h1>
+
+        <!-- 操作区 -->
+        <div class="test-section">
+            <h2>测试操作</h2>
+            <button onclick="testAdd()">1. 添加测试数据</button>
+            <button onclick="testGet()">2. 查询测试</button>
+            <button onclick="testUpdate()">3. 更新测试</button>
+            <button onclick="testDelete()">4. 删除测试</button>
+            <button onclick="testClear()">5. 清空数据</button>
+        </div>
+
+        <!-- 数据展示 -->
+        <div class="test-section">
+            <h2>当前数据 <button onclick="refreshData()">↻ 刷新</button></h2>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>姓名</th>
+                        <th>年龄</th>
+                        <th>邮箱</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody id="dataBody"></tbody>
+            </table>
+        </div>
+
+        <!-- 日志 -->
+        <div class="test-section">
+            <h2>操作日志</h2>
+            <div class="log" id="testLog"></div>
+        </div>
+    </div>
+<script src="../lib/index.umd.js"></script>
+<script>
+const TEST_DB_CONFIG = {
+    dbName: 'CRUDTestDB',
+    dbVersion: 1,
+    storeName: 'users',
+    keyPath: 'id',
+    indexes: [] // 无索引
+};
+
+let db = null;
+
+// 日志记录
+function log(message, isSuccess = true) {
+    const logDiv = document.getElementById('testLog');
+    const entry = document.createElement('div');
+    entry.className = isSuccess ? 'success' : 'error';
+    entry.innerHTML = `
+        <span class="loading">[${new Date().toLocaleTimeString()}]</span>
+        ${message}
+    `;
+    logDiv.appendChild(entry);
+}
+
+// 初始化数据库
+async function initDB() {
+    try {
+        db = rutils.indexdb(TEST_DB_CONFIG);
+        await db.open();
+        log("数据库初始化成功");
+        await refreshData();
+    } catch (e) {
+        log(`初始化失败: ${e.message}`, false);
+    }
+}
+
+// 刷新数据展示
+async function refreshData() {
+    const tbody = document.getElementById('dataBody');
+    tbody.innerHTML = '<tr><td colspan="5">加载中...</td></tr>';
+
+    try {
+        const allData = [];
+        await db.each(cursor => {
+            allData.push(cursor.value);
+        });
+        
+        tbody.innerHTML = '';
+        if (allData.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5">暂无数据</td></tr>';
+            return;
+        }
+
+        allData.forEach(item => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${item.id}</td>
+                <td>${item.name}</td>
+                <td>${item.age}</td>
+                <td>${item.email || '-'}</td>
+                <td>
+                    <button onclick="deleteItem('${item.id}')">删除</button>
+                    <button onclick="editItem('${item.id}')">编辑</button>
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
+    } catch (e) {
+        tbody.innerHTML = '<tr><td colspan="5">数据加载失败</td></tr>';
+        log(`数据刷新失败: ${e.message}`, false);
+    }
+}
+
+// 测试用例
+async function testAdd() {
+    try {
+        const testData = {
+            id: Date.now(),
+            name: `用户_${Math.floor(Math.random() * 1000)}`,
+            age: Math.floor(Math.random() * 50) + 18,
+            email: `test${Date.now()}@example.com`
+        };
+
+        await db.add(testData);
+        log(`✅ 添加成功 ID: ${testData.id}`);
+        await refreshData();
+    } catch (e) {
+        log(`❌ 添加失败: ${e.message}`, false);
+    }
+}
+
+async function testGet() {
+    try {
+        // 获取最后添加的条目
+        const allData = [];
+        await db.each(cursor => allData.push(cursor.value));
+        if (allData.length === 0) return log("⚠️ 没有可查询的数据");
+        
+        const lastItem = allData[allData.length - 1];
+        const result = await db.get(lastItem.id);
+        
+        if (result) {
+            log(`✅ 查询成功: ${JSON.stringify(result)}`);
+        } else {
+            log("⚠️ 查询结果为空");
+        }
+    } catch (e) {
+        log(`❌ 查询失败: ${e.message}`, false);
+    }
+}
+
+async function testUpdate() {
+    try {
+        const allData = [];
+        await db.each(cursor => allData.push(cursor.value));
+        if (allData.length === 0) return log("⚠️ 没有可更新的数据");
+        
+        const target = allData[0];
+        const newData = {
+            ...target,
+            age: target.age + 1,
+            email: `updated_${target.email}`
+        };
+
+        await db.put(newData);
+        log(`✅ 更新成功 ID: ${target.id}`);
+        await refreshData();
+    } catch (e) {
+        log(`❌ 更新失败: ${e.message}`, false);
+    }
+}
+
+async function testDelete() {
+    try {
+        const allData = [];
+        await db.each(cursor => allData.push(cursor.value));
+        if (allData.length === 0) return log("⚠️ 没有可删除的数据");
+        
+        const target = allData[0];
+        await db.del(target.id);
+        log(`✅ 删除成功 ID: ${target.id}`);
+        await refreshData();
+    } catch (e) {
+        log(`❌ 删除失败: ${e.message}`, false);
+    }
+}
+
+async function testClear() {
+    try {
+        await db.clear();
+        log("✅ 数据已清空");
+        await refreshData();
+    } catch (e) {
+        log(`❌ 清空失败: ${e.message}`, false);
+    }
+}
+
+// 辅助操作
+async function deleteItem(id) {
+    try {
+        await db.del(Number(id));
+        log(`✅ 删除条目 ID: ${id}`);
+        await refreshData();
+    } catch (e) {
+        log(`❌ 删除失败: ${e.message}`, false);
+    }
+}
+
+async function editItem(id) {
+    try {
+        const data = await db.get(Number(id));
+        const newName = prompt('输入新姓名', data.name);
+        if (!newName) return;
+
+        const newData = { ...data, name: newName };
+        await db.put(newData);
+        log(`✅ 更新成功 ID: ${id}`);
+        await refreshData();
+    } catch (e) {
+        log(`❌ 更新失败: ${e.message}`, false);
+    }
+}
+
+// 页面初始化
+window.addEventListener('load', initDB);
+</script>
+
+<script src="path/to/your-indexdb-class.js"></script>
+</body>
+</html>
