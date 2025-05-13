@@ -40,6 +40,7 @@ export { getMaxZIndex } from './Dom/getMaxZIndex' // 获取页面最高层级 z-
 export { getScrollDirection } from './Dom/getScrollDirection' // 获取滚动方向
 export { selectTextByElement } from './Dom/selectTextByElement' // 设置元素里面文字呈选中状态
 export { truncateTextToFit } from './Dom/truncateTextToFit' // 截断文本以适应元素
+export { closest } from './Dom/closest' // 获取最近的父元素
 
 /**
  * File 对象操作
